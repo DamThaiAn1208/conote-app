@@ -10,7 +10,7 @@ Từ nhu cầu đó, đề tài hướng đến việc xây dựng một ứng d
 
 Hệ thống được xây dựng theo mô hình client-server và áp dụng kiến trúc N-layer nhằm đảm bảo phân tách rõ ràng giữa giao diện, xử lý nghiệp vụ, truy cập dữ liệu và lưu trữ. Ở phía client, ứng dụng sử dụng JavaFX để xây dựng giao diện desktop trực quan, thân thiện với người dùng. Ở phía server, hệ thống sử dụng Java để xử lý nghiệp vụ, xác thực người dùng, quản lý note và điều phối quá trình chia sẻ dữ liệu giữa các tài khoản.
 
-Ứng dụng cho phép người dùng tạo mới, chỉnh sửa, xóa, tìm kiếm và phân loại ghi chú. Mỗi ghi chú có thể bao gồm tiêu đề, nội dung, thời gian tạo, thời gian cập nhật và trạng thái chia sẻ. Ngoài ra, hệ thống còn hỗ trợ đánh dấu yêu thích, ghim ghi chú quan trọng, và tìm kiếm nhanh theo từ khóa để giúp người dùng quản lý nội dung hiệu quả hơn.
+Ứng dụng cho phép người dùng tạo mới, chỉnh sửa, xóa, tìm kiếm và phân loại ghi chú. Mỗi ghi chú có thể bao gồm tiêu đề, nội dung, thời gian tạo, thời gian cập nhật và trạng thái chia sẻ. Ngoài ra hệ thống còn hỗ trợ ghim ứng dụng ghi chú trên desktop, đánh dấu yêu thích, ghim ghi chú quan trọng, và tìm kiếm nhanh theo từ khóa để giúp người dùng quản lý nội dung hiệu quả hơn.
 
 Một điểm nổi bật của hệ thống là chức năng chia sẻ ghi chú. Người dùng có thể chọn một note bất kỳ và chia sẻ cho người dùng khác thông qua tài khoản trong hệ thống. Khi chia sẻ, chủ sở hữu có thể thiết lập quyền truy cập như chỉ xem hoặc cho phép chỉnh sửa. Điều này giúp ứng dụng không chỉ phục vụ nhu cầu quản lý ghi chú cá nhân mà còn hỗ trợ trao đổi thông tin và cộng tác ở mức cơ bản giữa các người dùng.
 
