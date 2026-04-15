@@ -1,0 +1,64 @@
+table
+1. users
+2. notes
+3. shares
+4. tags
+5. note_tags
+6. email_otps
+
+1. users
+- user_id (PK)
+- user_name
+- email
+- password_hash
+- full_name
+- avatar
+- is_verified
+- is_active
+- create_at
+- update_at
+
+2. notes
+- note_id (PK)
+- ower_id (FK)
+- title
+- content
+- color
+- is_pinned
+- is_delete
+- share_status enum(PRIVATE,SHARED)
+- created_at
+- update_at
+
+3. shares
+- share_id(PK)
+- note_id (FK)
+- share_by(FK)
+- share_with (FK)
+- permission enum(VIEW,EDIT)
+
+4. tags
+- tag_id (PK)
+- user_id (FK)
+- tag_name
+- created_at
+
+5. note_tags
+- note_id (PK)
+- tag_id (FK)
+
+6. email_otps
+- otp_id (PK)
+- user_id (FK)
+- email
+- otp_code
+- purpose enum(REGISTER, RESET_PASSWORD)
+- expiry_time
+- created_at
+
+relationship:
+1. users 1-N notes
+2. notes 1_N note_tags
+3. note_tags N-1 tags
+4. users 1-N shares
+5. users 1-N email_otps
