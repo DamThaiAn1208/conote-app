@@ -15,20 +15,20 @@ table
 - avatar
 - is_verified
 - is_active
-- create_at
-- update_at
+- created_at
+- updated_at
 
 2. notes
 - note_id (PK)
-- ower_id (FK)
-- title
+- owner_id (FK)
+- title 
 - content
 - color
 - is_pinned
 - is_delete
 - share_status enum(PRIVATE,SHARED)
 - created_at
-- update_at
+- updated_at
 
 3. shares
 - share_id(PK)
@@ -45,13 +45,14 @@ table
 
 5. note_tags
 - note_id (PK)
-- tag_id (FK)
+- tag_id (PK)
 
 6. email_otps
 - otp_id (PK)
 - user_id (FK)
 - email
 - otp_code
+- is_used
 - purpose enum(REGISTER, RESET_PASSWORD)
 - expiry_time
 - created_at
@@ -61,4 +62,5 @@ relationship:
 2. notes 1_N note_tags
 3. note_tags N-1 tags
 4. users 1-N shares
-5. users 1-N email_otps
+5. notes 1-N shares
+6. users 1-N email_otps
