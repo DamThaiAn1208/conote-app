@@ -1,0 +1,1038 @@
+==================================================
+CẤU TRÚC THƯ MỤC TỔNG THỂ
+==================================================
+
+conote-app/
+│
+├── pom.xml
+│
+├── conote-common/
+│ ├── pom.xml
+│ └── src/
+│ ├── main/
+│ │ ├── java/
+│ │ │ └── com/conote/common/
+│ │ │ ├── dto/
+│ │ │ ├── model/
+│ │ │ ├── enums/
+│ │ │ └── util/
+│ │ └── resources/
+│ └── test/
+│ └── java/
+│
+├── conote-server/
+│ ├── pom.xml
+│ └── src/
+│ ├── main/
+│ │ ├── java/
+│ │ │ └── com/conote/server/
+│ │ │ ├── config/
+│ │ │ ├── controller/
+│ │ │ ├── service/
+│ │ │ ├── dao/
+│ │ │ ├── network/
+│ │ │ ├── security/
+│ │ │ ├── file/
+│ │ │ ├── util/
+│ │ │ └── ServerApplication.java
+│ │ └── resources/
+│ │ ├── application.properties
+│ │ ├── db.properties
+│ │ └── logback.xml
+│ └── test/
+│ └── java/
+│
+└── conote-client/
+├── pom.xml
+└── src/
+├── main/
+│ ├── java/
+│ │ └── com/conote/client/
+│ │ ├── app/
+│ │ ├── controller/
+│ │ ├── service/
+│ │ ├── network/
+│ │ ├── util/
+│ │ └── ClientApplication.java
+│ └── resources/
+│ ├── fxml/
+│ ├── css/
+│ ├── images/
+│ └── icons/
+└── test/
+└── java/
+
+==================================================
+2. GIẢI THÍCH PHẦN ROOT: Library-system
+==================================================
+
+conote-system là thư mục gốc của toàn bộ project.
+
+Nó không phải nơi để viết code nghiệp vụ chính.
+Nó đóng vai trò là “project cha” để quản lý các module con.
+
+Trong thư mục này thường chỉ nên có:
+
+file pom.xml gốc
+các thư mục module con
+file cấu hình chung nếu cần
+
+Không nên để:
+
+src/main/java ở root
+code Java nghiệp vụ ở root
+
+Lý do:
+Vì project đang làm theo Maven multi-module.
+Root chỉ làm nhiệm vụ quản lý, còn code thật sẽ nằm trong từng module riêng.
+
+==================================================
+3. GIẢI THÍCH FILE ROOT pom.xml
+==================================================
+
+File:
+conote-system/pom.xml
+
+Vai trò:
+
+là pom cha của toàn bộ hệ thống
+quản lý version chung
+quản lý dependency version chung
+khai báo các module con
+quy định Java version toàn project
+
+Ví dụ root pom sẽ khai báo:
+
+conote-common
+conote-server
+conote-client
+
+Nghĩa là khi chạy:
+mvn clean install
+
+Maven sẽ build lần lượt:
+
+conote-common
+conote-server
+conote-client
+
+Tóm lại:
+pom.xml ở root giống như “bộ chỉ huy trung tâm”.
+
+==================================================
+5. GIẢI THÍCH MODULE library-common
+==================================================
+Thư mục:
+library-common/
+
+Vai trò:
+Đây là module chứa những thành phần dùng chung cho cả client và server.
+
+Nó chứa:
+
+model
+dto
+enum
+utility đơn giản dùng chung
+
+Mục đích:
+Khi client và server đều cần dùng chung cấu trúc dữ liệu thì chỉ cần đặt trong common.
+
+Ví dụ:
+
+User
+Book
+Comment
+Message
+LoginRequest
+LoginResponse
+RegisterRequest
+ApiResponse
+Role
+LanguageCode
+
+Nhờ vậy:
+
+không phải tạo User bên client và User bên server riêng
+dữ liệu đồng bộ
+dễ convert sang JSON
+dễ bảo trì
+==================================================
+6. GIẢI THÍCH THƯ MỤC library-common/src
+
+6.1. src/main/java
+
+Đây là nơi chứa code Java chính của module common.
+
+Bên trong thường có package:
+com.library.common
+
+6.2. src/main/resources
+
+Chứa tài nguyên đi kèm nếu có.
+Thường module common sẽ ít dùng resources.
+Có thể để trống.
+
+6.3. src/test/java
+
+Chứa code test cho module common.
+
+Ví dụ:
+
+test DTO
+test utility class
+test enum mapping
+==================================================
+7. GIẢI THÍCH PACKAGE TRONG library-common
+
+7.1. dto/
+
+DTO = Data Transfer Object
+
+Nơi chứa các đối tượng dùng để truyền dữ liệu giữa client và server.
+
+Ví dụ:
+
+LoginRequest
+LoginResponse
+RegisterRequest
+BookUploadRequest
+ChatMessageRequest
+ApiResponse<T>
+
+Tại sao cần DTO:
+Vì dữ liệu gửi qua mạng không nên gửi lung tung.
+Cần có format rõ ràng.
+
+Ví dụ:
+LoginRequest có thể gồm:
+
+username
+password
+
+LoginResponse có thể gồm:
+
+success
+message
+userId
+role
+
+DTO rất quan trọng trong mô hình client-server.
+
+7.2. model/
+
+Chứa các model nghiệp vụ chính của hệ thống.
+
+Ví dụ:
+
+User
+Book
+Comment
+Favorite
+Message
+Vocabulary
+Translation
+UserSetting
+
+Model biểu diễn thực thể trong hệ thống.
+
+Ví dụ:
+User đại diện cho người dùng
+Book đại diện cho sách
+Comment đại diện cho bình luận
+
+Lưu ý:
+Model khác DTO ở chỗ:
+
+Model thể hiện thực thể nghiệp vụ
+DTO thể hiện dữ liệu truyền giữa các lớp hoặc qua mạng
+
+7.3. enums/
+
+Chứa các kiểu liệt kê.
+
+Ví dụ:
+
+Role
+LanguageCode
+MessageType
+BookCategory
+ThemeMode
+
+Ví dụ:
+Role có thể gồm:
+
+USER
+ADMIN
+
+LanguageCode có thể gồm:
+
+VI
+EN
+JA
+KO
+
+Dùng enum giúp code rõ ràng hơn, tránh dùng String bừa bãi.
+
+7.4. util/
+
+Chứa các tiện ích dùng chung.
+
+Ví dụ:
+
+JsonUtil
+DateTimeUtil
+StringUtil
+ValidationUtil
+
+Lưu ý:
+Chỉ nên để các hàm tiện ích nhỏ, dùng chung.
+Không nên nhét logic nghiệp vụ nặng vào util.
+
+==================================================
+8. GIẢI THÍCH MODULE library-server
+
+Thư mục:
+library-server/
+
+Đây là nơi chứa toàn bộ phần backend/server của hệ thống.
+
+Nó chịu trách nhiệm:
+
+nhận request từ client
+xử lý nghiệp vụ
+truy cập database
+xử lý file sách
+mã hóa mật khẩu
+gửi phản hồi về client
+xử lý chat realtime
+
+Có thể hiểu:
+library-server là “bộ não” của hệ thống.
+
+==================================================
+9. GIẢI THÍCH library-server/src
+
+9.1. src/main/java
+
+Chứa code Java chính của server.
+
+9.2. src/main/resources
+
+Chứa file cấu hình server.
+
+Ví dụ:
+
+application.properties
+db.properties
+logback.xml
+
+9.3. src/test/java
+
+Chứa unit test hoặc integration test cho server.
+
+==================================================
+10. GIẢI THÍCH PACKAGE TRONG library-server
+
+10.1. config/
+
+Chứa các class cấu hình hệ thống.
+
+Ví dụ:
+
+DatabaseConfig
+ServerConfig
+SocketConfig
+
+Mục đích:
+Tập trung phần cấu hình vào một nơi để dễ quản lý.
+
+Ví dụ:
+DatabaseConfig có thể đọc thông tin:
+
+database url
+username
+password
+
+10.2. controller/
+
+Chứa lớp tiếp nhận request và điều phối xử lý.
+
+Trong mô hình của bạn, controller phía server là nơi nhận dữ liệu từ client.
+
+Ví dụ:
+
+AuthController
+BookController
+CommentController
+FavoriteController
+ChatController
+TranslationController
+
+Nhiệm vụ của controller:
+
+nhận request
+kiểm tra sơ bộ
+gọi service tương ứng
+trả response
+
+Controller không nên chứa toàn bộ business logic.
+
+Ví dụ:
+Khi client gửi yêu cầu đăng nhập:
+
+AuthController nhận LoginRequest
+gọi AuthService xử lý
+trả LoginResponse
+
+10.3. service/
+
+Chứa logic nghiệp vụ chính.
+
+Đây là lớp rất quan trọng trong N-layer.
+
+Ví dụ:
+
+AuthService
+BookService
+CommentService
+FavoriteService
+VocabularyService
+TranslationService
+ChatService
+
+Nhiệm vụ:
+
+xử lý luật nghiệp vụ
+kết hợp nhiều DAO
+kiểm tra logic hệ thống
+
+Ví dụ:
+BookService có thể:
+
+lưu thông tin sách
+gọi bộ đọc PDF/Word
+lưu text đã trích xuất
+kiểm tra sách hợp lệ
+
+Tóm lại:
+service là nơi quyết định hệ thống hoạt động như thế nào.
+
+10.4. dao/
+
+DAO = Data Access Object
+
+Đây là lớp truy cập dữ liệu từ database.
+
+Ví dụ:
+
+UserDAO
+BookDAO
+CommentDAO
+FavoriteDAO
+MessageDAO
+VocabularyDAO
+
+Nhiệm vụ:
+
+viết SQL
+insert/update/delete/select dữ liệu
+
+Ví dụ:
+UserDAO có thể có:
+
+findByUsername()
+save()
+updatePassword()
+findById()
+
+DAO không nên xử lý nghiệp vụ phức tạp.
+Nó chỉ nên tập trung vào database.
+
+10.5. network/
+
+Chứa phần giao tiếp mạng giữa client và server.
+
+Ví dụ:
+
+SocketServer
+ClientHandler
+RequestDispatcher
+SessionManager
+
+Nhiệm vụ:
+
+mở cổng server
+chấp nhận kết nối client
+nhận dữ liệu JSON
+chuyển request tới controller
+gửi response ngược lại
+
+Nếu bạn làm nhắn tin realtime, phần này rất quan trọng.
+
+Ví dụ:
+Client A gửi tin nhắn
+-> SocketServer nhận
+-> ChatController/ChatService xử lý
+-> gửi tới Client B
+
+10.6. security/
+
+Chứa phần bảo mật.
+
+Ví dụ:
+
+BCryptUtil
+PasswordEncoder
+AuthSessionManager
+TokenUtil nếu sau này mở rộng
+
+Nhiệm vụ:
+
+hash mật khẩu
+so sánh mật khẩu khi đăng nhập
+quản lý session đăng nhập
+
+Ví dụ:
+Khi đăng ký:
+
+password gốc không lưu trực tiếp
+BCrypt hash password
+lưu hash vào DB
+
+Khi đăng nhập:
+
+lấy hash trong DB
+so khớp bằng BCrypt
+
+10.7. file/
+
+Chứa xử lý file sách.
+
+Đây là package rất quan trọng với đề tài của bạn.
+
+Ví dụ:
+
+FileStorageService
+PdfExtractor
+WordExtractor
+FileValidator
+
+Nhiệm vụ:
+
+lưu file upload
+kiểm tra loại file
+trích xuất text từ PDF/DOCX
+kiểm tra kích thước file
+
+Ví dụ:
+User upload sách PDF
+-> FileStorageService lưu file
+-> PdfExtractor đọc nội dung
+-> BookService lưu text vào DB
+
+10.8. util/
+
+Chứa các hàm tiện ích riêng cho server.
+
+Ví dụ:
+
+FileNameUtil
+JsonResponseUtil
+ServerTimeUtil
+
+Không nên để logic nghiệp vụ chính ở đây.
+
+10.9. ServerApplication.java
+
+Đây là class chạy chính của server.
+
+Nhiệm vụ:
+
+khởi động server
+mở socket
+nạp cấu hình
+in log server started
+
+Ví dụ:
+public static void main(String[] args)
+
+Đây là điểm bắt đầu của server.
+
+==================================================
+11. GIẢI THÍCH library-server/resources
+
+11.1. application.properties
+
+Chứa cấu hình chung của ứng dụng.
+
+Ví dụ:
+
+server.port
+upload.dir
+max.file.size
+
+11.2. db.properties
+
+Chứa cấu hình database.
+
+Ví dụ:
+
+db.url
+db.username
+db.password
+
+11.3. logback.xml
+
+Chứa cấu hình logging.
+
+Ví dụ:
+
+log ra console
+log ra file
+mức log INFO, DEBUG, ERROR
+
+Tách các file này ra giúp:
+
+dễ đổi cấu hình
+không hard-code trong Java
+==================================================
+12. GIẢI THÍCH MODULE library-client
+
+Thư mục:
+library-client/
+
+Đây là phần giao diện và xử lý phía người dùng.
+
+Nó có nhiệm vụ:
+
+hiển thị màn hình JavaFX
+nhận thao tác từ người dùng
+gửi request tới server
+hiển thị response từ server
+render dữ liệu như sách, bình luận, chat, cài đặt
+
+Có thể hiểu:
+library-client là “bộ mặt” của ứng dụng.
+
+==================================================
+13. GIẢI THÍCH library-client/src
+
+13.1. src/main/java
+
+Chứa code Java phía client.
+
+13.2. src/main/resources
+
+Chứa giao diện FXML, CSS, ảnh, icon.
+
+13.3. src/test/java
+
+Chứa test cho client nếu cần.
+
+==================================================
+14. GIẢI THÍCH PACKAGE TRONG library-client
+
+14.1. app/
+
+Chứa class khởi động hoặc lớp quản lý ứng dụng client.
+
+Ví dụ:
+
+AppLauncher
+SceneManager
+NavigationManager
+
+Nếu project nhỏ, package này có thể đơn giản.
+
+14.2. controller/
+
+Chứa controller của JavaFX.
+
+Mỗi file FXML thường sẽ có một controller tương ứng.
+
+Ví dụ:
+
+LoginController
+RegisterController
+HomeController
+BookDetailController
+ReaderController
+ChatController
+SettingsController
+
+Nhiệm vụ:
+
+bắt sự kiện từ giao diện
+lấy dữ liệu người dùng nhập
+gọi service phía client
+cập nhật UI
+
+Ví dụ:
+Người dùng bấm nút Login
+-> LoginController lấy username/password
+-> gọi AuthClientService
+-> hiện thông báo thành công hoặc lỗi
+
+14.3. service/
+
+Chứa logic phía client.
+
+Ví dụ:
+
+AuthClientService
+BookClientService
+ChatClientService
+SettingsClientService
+
+Nhiệm vụ:
+
+gửi request lên server
+nhận response
+xử lý dữ liệu trước khi đưa lên UI
+
+Service phía client không giống service phía server.
+Client service chủ yếu phục vụ giao tiếp và hỗ trợ UI.
+
+14.4. network/
+
+Chứa phần kết nối mạng phía client.
+
+Ví dụ:
+
+SocketClient
+RequestSender
+ResponseReader
+ConnectionManager
+
+Nhiệm vụ:
+
+kết nối tới server
+gửi JSON request
+lắng nghe JSON response
+duy trì kết nối cho chat realtime
+
+Package này rất cần cho mô hình client-server.
+
+14.5. util/
+
+Chứa các tiện ích phía client.
+
+Ví dụ:
+
+AlertUtil
+SceneUtil
+FormValidationUtil
+
+Ví dụ:
+AlertUtil có thể hiển thị:
+
+thông báo lỗi
+thông báo thành công
+xác nhận xóa
+
+14.6. ClientApplication.java
+
+Đây là class chạy chính của JavaFX client.
+
+Nhiệm vụ:
+
+khởi động JavaFX Application
+mở cửa sổ đầu tiên
+nạp file FXML đầu tiên
+thiết lập title/icon
+
+Đây là entry point của phần client.
+
+==================================================
+15. GIẢI THÍCH library-client/resources
+
+15.1. fxml/
+
+Chứa các file giao diện JavaFX dạng FXML.
+
+Ví dụ:
+
+login.fxml
+register.fxml
+home.fxml
+book-detail.fxml
+reader.fxml
+chat.fxml
+settings.fxml
+
+FXML dùng để mô tả giao diện.
+
+Tách FXML ra giúp:
+
+giao diện rõ ràng
+dễ chỉnh sửa
+dễ liên kết với controller
+
+15.2. css/
+
+Chứa file CSS cho JavaFX.
+
+Ví dụ:
+
+app.css
+login.css
+home.css
+reader.css
+
+Nhiệm vụ:
+
+đổi màu sắc
+font chữ
+style nút bấm
+style khung chat
+style khu vực đọc sách
+
+15.3. images/
+
+Chứa ảnh dùng trong giao diện.
+
+Ví dụ:
+
+background
+banner
+ảnh minh họa
+avatar mặc định
+
+15.4. icons/
+
+Chứa icon.
+
+Ví dụ:
+
+icon tim yêu thích
+icon chat
+icon sách
+icon cài đặt
+
+Tách icons riêng khỏi images giúp quản lý tài nguyên tốt hơn.
+
+==================================================
+16. GIẢI THÍCH THƯ MỤC test
+
+Mỗi module đều có:
+src/test/java
+
+Nơi này dùng để viết test.
+
+Ví dụ:
+
+test validate dữ liệu
+test DAO
+test service
+test utility
+
+Lợi ích:
+
+giúp kiểm tra logic
+dễ phát hiện lỗi sớm
+làm project chuyên nghiệp hơn
+
+Nếu chưa học test kỹ, bạn có thể để trống lúc đầu.
+Nhưng cấu trúc vẫn nên có.
+
+==================================================
+17. LUỒNG HOẠT ĐỘNG GIỮA CÁC MODULE
+
+Ví dụ chức năng đăng nhập:
+
+Bước 1:
+Người dùng nhập username/password trên giao diện JavaFX
+
+Bước 2:
+LoginController ở library-client nhận dữ liệu
+
+Bước 3:
+AuthClientService gọi network để gửi LoginRequest dạng JSON
+
+Bước 4:
+library-server nhận request qua SocketServer/ClientHandler
+
+Bước 5:
+AuthController nhận request
+
+Bước 6:
+AuthService xử lý nghiệp vụ đăng nhập
+
+Bước 7:
+AuthService gọi UserDAO lấy user từ database
+
+Bước 8:
+security/BCryptUtil kiểm tra mật khẩu
+
+Bước 9:
+Server trả LoginResponse về client
+
+Bước 10:
+Client nhận response và chuyển sang màn hình Home nếu thành công
+
+Trong luồng này:
+
+DTO nằm ở common
+UI nằm ở client
+nghiệp vụ nằm ở server
+dữ liệu nằm ở DB
+==================================================
+18. LIÊN HỆ VỚI KIẾN TRÚC N-LAYER
+
+Trong project của bạn, N-layer chủ yếu thể hiện rõ ở server:
+
+Presentation Layer
+controller
+Business Layer
+service
+Data Access Layer
+dao
+Database Layer
+MySQL / MariaDB
+
+Phía client có thể hiểu đơn giản là:
+
+UI Layer: FXML + controller
+Client Service Layer: service
+Communication Layer: network
+
+Như vậy cấu trúc thư mục phản ánh đúng kiến trúc hệ thống.
+
+==================================================
+19. VÌ SAO KHÔNG NÊN ĐỂ TẤT CẢ VÀO 1 PACKAGE
+
+Nếu bạn để mọi class vào chung 1 nơi, ví dụ:
+
+UserDAO
+LoginController
+BookService
+PdfExtractor
+SocketServer
+
+thì sẽ có vấn đề:
+
+rất khó tìm file
+khó đọc code
+khó phân biệt trách nhiệm
+dễ viết sai vai trò class
+khó sửa khi project lớn
+
+Chia package theo chức năng giúp:
+
+sạch code
+rõ trách nhiệm
+dễ bảo trì
+dễ giải thích khi bảo vệ
+==================================================
+20. GỢI Ý CÁC CLASS NÊN TẠO BAN ĐẦU
+
+20.1. library-common/model
+
+User
+Book
+Comment
+Message
+Vocabulary
+UserSetting
+
+20.2. library-common/dto
+
+LoginRequest
+LoginResponse
+RegisterRequest
+RegisterResponse
+ApiResponse
+ChatMessageRequest
+
+20.3. library-server/controller
+
+AuthController
+BookController
+ChatController
+
+20.4. library-server/service
+
+AuthService
+BookService
+ChatService
+
+20.5. library-server/dao
+
+UserDAO
+BookDAO
+MessageDAO
+
+20.6. library-server/file
+
+PdfExtractor
+WordExtractor
+FileStorageService
+
+20.7. library-client/controller
+
+LoginController
+RegisterController
+HomeController
+
+20.8. library-client/service
+
+AuthClientService
+BookClientService
+ChatClientService
+
+20.9. library-client/network
+
+SocketClient
+RequestSender
+==================================================
+21. CÁCH NHỚ NGẮN GỌN TỪNG MODULE
+
+library-common
+= chứa thứ dùng chung cho cả client và server
+
+library-server
+= xử lý nghiệp vụ, database, file, bảo mật, realtime
+
+library-client
+= giao diện JavaFX và tương tác người dùng
+
+Root Library-system
+= quản lý toàn bộ project
+
+==================================================
+22. KẾT LUẬN
+
+Cấu trúc thư mục này phù hợp với project của bạn vì:
+
+đúng kiểu Maven multi-module
+tách rõ client và server
+có module common để dùng chung dữ liệu
+dễ mở rộng khi thêm chức năng
+đúng tinh thần N-layer
+dễ giải thích khi bảo vệ đồ án
+
+Hiểu ngắn gọn:
+
+Root quản lý toàn hệ thống
+Common chứa dữ liệu dùng chung
+Server xử lý backend
+Client xử lý giao diện
+==================================================
+23. PHIÊN BẢN SIÊU NGẮN ĐỂ GHI NHỚ
+Library-system
+project gốc
+chỉ quản lý module
+không chứa code nghiệp vụ
+library-common
+chứa model, DTO, enum, util dùng chung
+library-server
+chứa controller, service, dao, network, security, file
+xử lý backend
+library-client
+chứa controller, service, network, FXML, CSS
+xử lý giao diện JavaFX
+Root pom.xml
+quản lý toàn bộ module
+Mỗi module có pom.xml riêng
+quản lý dependency riêng của module đó
