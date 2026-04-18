@@ -19,6 +19,7 @@ import java.util.Locale;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
@@ -98,6 +99,7 @@ public class NoteWindowController {
   private void initialize() {
     MotionSupport.installButtonMotion(windowMinimizeButton);
     MotionSupport.installButtonMotion(windowCloseButton);
+    titleField.setCursor(Cursor.TEXT);
 
     overlayLayer.setVisible(false);
     overlayLayer.setManaged(false);
@@ -316,5 +318,6 @@ public class NoteWindowController {
       surface = "#fff6d8";
     }
     noteContentShell.setStyle("-fx-background-color: " + surface + ";");
+    textNoteEditorController.updatePalette(surface, store.getTheme());
   }
 }

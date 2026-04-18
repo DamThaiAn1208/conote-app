@@ -40,7 +40,11 @@
         <Label styleClass="create-note-primary-label" text="T&#7841;o note m&#7899;i" />
       </children>
     </HBox>
-    <VBox fx:id="menu" fillWidth="true" managed="false" spacing="0.0" styleClass="create-note-menu" visible="false">
+    <VBox fx:id="menu" fillWidth="true" managed="false" spacing="0.0" visible="false">
+      <styleClass>
+        <String fx:value="surface-shell" />
+        <String fx:value="create-note-menu" />
+      </styleClass>
       <children>
         <HBox fx:id="textNoteRow"
               alignment="CENTER_LEFT"

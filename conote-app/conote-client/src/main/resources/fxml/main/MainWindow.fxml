@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -12,7 +13,11 @@
   <children>
     <StackPane fx:id="windowFrame" maxHeight="Infinity" maxWidth="480.0" minWidth="480.0" prefWidth="480.0" StackPane.alignment="TOP_CENTER">
       <children>
-        <VBox fx:id="mainWindowShell" maxHeight="Infinity" maxWidth="480.0" minWidth="480.0" prefWidth="480.0" spacing="0.0" styleClass="main-window-shell">
+        <VBox fx:id="mainWindowShell" maxHeight="Infinity" maxWidth="480.0" minWidth="480.0" prefWidth="480.0" spacing="0.0">
+          <styleClass>
+            <String fx:value="surface-shell" />
+            <String fx:value="main-window-shell" />
+          </styleClass>
           <children>
             <fx:include fx:id="titleBar" source="MainTitleBar.fxml" />
             <VBox spacing="18.0" styleClass="main-window-body" VBox.vgrow="ALWAYS">

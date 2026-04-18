@@ -22,7 +22,11 @@
            prefWidth="900.0"
            styleClass="note-window-root">
   <children>
-    <StackPane fx:id="windowFrame" styleClass="note-window">
+    <StackPane fx:id="windowFrame">
+      <styleClass>
+        <String fx:value="surface-shell" />
+        <String fx:value="note-window" />
+      </styleClass>
       <children>
         <VBox fx:id="windowShell" spacing="0.0" styleClass="note-window-shell">
           <children>

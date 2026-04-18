@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.StackPane?>
@@ -11,9 +12,12 @@
       xmlns:fx="http://javafx.com/fxml/1"
       managed="false"
       spacing="8.0"
-      styleClass="popover-card"
       visible="false"
       StackPane.alignment="TOP_LEFT">
+  <styleClass>
+    <String fx:value="surface-shell" />
+    <String fx:value="popover-card" />
+  </styleClass>
   <StackPane.margin>
     <Insets left="54.0" top="58.0" />
   </StackPane.margin>

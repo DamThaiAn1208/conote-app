@@ -7,22 +7,19 @@
   -fx-padding: 10px;
 }
 
-.main-window-shell,
-.filter-panel,
-.create-note-menu,
-.popover-card,
-.dialog-card {
-  -fx-background-color: rgba(255, 255, 255, 0.96);
-  -fx-background-radius: 16px;
-  -fx-border-color: #e2e8f0;
-  -fx-border-radius: 16px;
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.1), 18, 0.16, 0, 6);
+.surface-shell {
+  -fx-background-color: rgba(255, 255, 255, 0.965);
+  -fx-background-radius: 18px;
+  -fx-border-color: rgba(226, 232, 240, 0.82);
+  -fx-border-width: 0.9px;
+  -fx-border-radius: 18px;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.11), 32, 0.18, 0, 10);
 }
 
 .main-window-shell {
   -fx-max-height: Infinity;
-  -fx-background-radius: 14px;
-  -fx-border-radius: 14px;
 }
 
 .main-window-body {
@@ -231,14 +228,8 @@
 }
 
 .user-menu-dropdown {
-  -fx-background-color: rgba(255, 255, 255, 0.98);
-  -fx-background-radius: 18px;
-  -fx-border-color: rgba(226, 232, 240, 0.92);
-  -fx-border-width: 1px;
-  -fx-border-radius: 18px;
   -fx-pref-width: 264px;
   -fx-padding: 14px;
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.12), 22, 0.18, 0, 10);
 }
 
 .menu-user-row {
@@ -402,13 +393,6 @@
   -fx-max-height: 40px;
 }
 
-.filter-panel,
-.create-note-menu,
-.popover-card {
-  -fx-background-radius: 18px;
-  -fx-border-radius: 18px;
-}
-
 .filter-panel {
   -fx-padding: 16px;
 }
@@ -566,12 +550,6 @@
 .create-note-primary-button .button-leading-icon,
 .create-note-primary-button .create-note-leading-icon {
   -fx-icon-color: #1f2937;
-}
-
-.create-note-menu {
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.1), 16, 0.16, 0, 6);
-  -fx-background-radius: 14px;
-  -fx-border-radius: 14px;
 }
 
 .create-menu-row {
@@ -781,10 +759,55 @@
   -fx-font-size: 15px;
   -fx-text-fill: #334155;
   -fx-padding: 0;
+  -fx-control-inner-background: transparent;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
 }
 
+.quick-note-textarea .scroll-pane,
+.text-note-editor .scroll-pane,
+.quick-note-textarea .scroll-pane > .viewport,
+.text-note-editor .scroll-pane > .viewport,
+.quick-note-textarea .scroll-pane > .corner,
+.text-note-editor .scroll-pane > .corner,
 .quick-note-textarea .content,
 .text-note-editor .content {
+  -fx-background-color: transparent;
+}
+
+.quick-note-textarea > .scroll-pane > .viewport,
+.text-note-editor > .scroll-pane > .viewport {
+  -fx-background-color: transparent;
+}
+
+.quick-note-textarea > .scroll-pane > .scroll-bar:vertical,
+.text-note-editor > .scroll-pane > .scroll-bar:vertical {
+  -fx-background-color: transparent;
+}
+
+.quick-note-textarea > .scroll-pane > .scroll-bar:vertical > .track,
+.text-note-editor > .scroll-pane > .scroll-bar:vertical > .track {
+  -fx-background-color: transparent;
+}
+
+.quick-note-textarea > .scroll-pane > .scroll-bar:vertical > .thumb,
+.text-note-editor > .scroll-pane > .scroll-bar:vertical > .thumb {
+  -fx-background-color: rgba(148, 163, 184, 0.34);
+  -fx-background-radius: 999px;
+}
+
+.quick-note-textarea > .scroll-pane > .scroll-bar:horizontal,
+.text-note-editor > .scroll-pane > .scroll-bar:horizontal {
+  -fx-opacity: 0;
+  -fx-pref-height: 0;
+  -fx-max-height: 0;
+  -fx-padding: 0;
+}
+
+.quick-note-textarea > .scroll-pane > .scroll-bar:horizontal > .track,
+.quick-note-textarea > .scroll-pane > .scroll-bar:horizontal > .thumb,
+.text-note-editor > .scroll-pane > .scroll-bar:horizontal > .track,
+.text-note-editor > .scroll-pane > .scroll-bar:horizontal > .thumb {
   -fx-background-color: transparent;
 }
 
@@ -809,24 +832,19 @@
 }
 
 .note-window {
-  -fx-background-color: white;
-  -fx-background-radius: 22px;
-  -fx-border-radius: 22px;
-  -fx-border-color: rgba(255, 255, 255, 0.7);
-  -fx-border-width: 1px;
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.24), 36, 0.2, 0, 14);
+  -fx-background-color: rgba(255, 255, 255, 0.965);
 }
 
 .note-window-shell {
   -fx-background-color: transparent;
-  -fx-background-radius: 22px;
+  -fx-background-radius: 18px;
 }
 
 .note-window-title-bar {
   -fx-border-color: transparent transparent rgba(226, 232, 240, 0.78) transparent;
   -fx-border-width: 0 0 1 0;
   -fx-background-color: rgba(255, 255, 255, 0.18);
-  -fx-background-radius: 22px 22px 0 0;
+  -fx-background-radius: 18px 18px 0 0;
 }
 
 .note-toolbar-shell {
@@ -906,7 +924,7 @@
 
 .note-content-shell {
   -fx-background-color: #fff6d8;
-  -fx-background-radius: 0 0 22px 22px;
+  -fx-background-radius: 0 0 18px 18px;
 }
 
 .note-header-shell {
@@ -1044,6 +1062,7 @@
   -fx-text-fill: #0f172a;
   -fx-font-size: 24px;
   -fx-font-weight: 800;
+  -fx-cursor: text;
   -fx-padding: 0;
   -fx-background-color: transparent;
   -fx-border-color: transparent;
@@ -1060,7 +1079,7 @@
   -fx-min-height: 260px;
   -fx-font-size: 17px;
   -fx-text-fill: #1e3a5f;
-  -fx-line-spacing: 7px;
+  -fx-cursor: text;
   -fx-padding: 0;
   -fx-background-color: transparent;
 }
@@ -1086,11 +1105,7 @@
 }
 
 .help-dialog-card {
-    -fx-background-color: rgba(255, 255, 255, 0.98);
-    -fx-background-radius: 14px;
-    -fx-border-color: rgba(226, 232, 240, 0.92);
-    -fx-border-radius: 14px;
-    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.16), 18, 0.16, 0, 8);
+    -fx-background-color: rgba(255, 255, 255, 0.985);
   }
 
 .dialog-title {
@@ -1225,11 +1240,13 @@
   -fx-background-color: transparent;
 }
 
-.theme-dark .main-window-shell,
-.theme-dark .filter-panel,
-.theme-dark .create-note-menu,
-.theme-dark .popover-card,
-.theme-dark .dialog-card,
+.theme-dark.surface-shell,
+.theme-dark .surface-shell {
+  -fx-background-color: rgba(15, 23, 42, 0.945);
+  -fx-border-color: rgba(148, 163, 184, 0.2);
+  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.34), 34, 0.22, 0, 12);
+}
+
 .theme-dark .note-list-surface {
   -fx-background-color: rgba(15, 23, 42, 0.94);
   -fx-border-color: rgba(148, 163, 184, 0.24);
@@ -1335,12 +1352,6 @@
   -fx-text-fill: rgba(203, 213, 225, 0.44);
 }
 
-.theme-dark.user-menu-dropdown {
-  -fx-background-color: rgba(15, 23, 42, 0.96);
-  -fx-border-color: rgba(148, 163, 184, 0.22);
-  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.38), 24, 0.2, 0, 12);
-}
-
 .theme-dark .menu-action-copy {
   -fx-text-fill: #94a3b8;
 }
@@ -1408,8 +1419,9 @@
   -fx-prompt-text-fill: #94a3b8;
 }
 
-.theme-dark .help-dialog-card {
-  -fx-background-color: rgba(15, 23, 42, 0.98);
+.theme-dark .quick-note-textarea > .scroll-pane > .scroll-bar:vertical > .thumb,
+.theme-dark .text-note-editor > .scroll-pane > .scroll-bar:vertical > .thumb {
+  -fx-background-color: rgba(203, 213, 225, 0.32);
 }
 
 .theme-dark .help-link-button:hover {
@@ -1447,11 +1459,6 @@
 
 .theme-dark .note-content-shell {
   -fx-background-color: rgba(15, 23, 42, 0.72);
-}
-
-.theme-dark .note-window {
-  -fx-background-color: rgba(15, 23, 42, 0.96);
-  -fx-border-color: rgba(148, 163, 184, 0.24);
 }
 
 .theme-dark .note-window-title-bar {
