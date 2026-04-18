@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.embed.swing.SwingNode?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:controller="com.conote.client.controller.TextNoteEditorController"
+      fx:id="root"
+      fillWidth="true"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      styleClass="text-editor-shell">
+  <children>
+    <StackPane fx:id="editorContainer"
+               alignment="TOP_LEFT"
+               maxWidth="1.7976931348623157E308"
+               styleClass="text-note-editor"
+               VBox.vgrow="ALWAYS">
+      <children>
+        <SwingNode fx:id="editorHost"
+                   pickOnBounds="true" />
+      </children>
+    </StackPane>
+  </children>
+</VBox>

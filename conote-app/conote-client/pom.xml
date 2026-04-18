@@ -38,6 +38,21 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-javafx</artifactId>
+        </dependency>
+
+            <dependency>
+                <groupId>org.kordamp.ikonli</groupId>
+                <artifactId>ikonli-codicons-pack</artifactId>
+            </dependency>
     </dependencies>
 
     <build>
@@ -51,7 +66,7 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.library.client.ClientApplication</mainClass>
+                    <mainClass>com.conote.client.app.ClientApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

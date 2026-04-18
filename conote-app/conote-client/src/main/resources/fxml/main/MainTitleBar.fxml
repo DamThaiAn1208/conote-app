@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane fx:controller="com.conote.client.controller.MainTitleBarController"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           maxHeight="46.0"
+           minHeight="46.0"
+           prefHeight="46.0"
+           styleClass="main-title-shell">
+  <children>
+    <HBox fx:id="titleBar"
+          alignment="CENTER_LEFT"
+          maxHeight="46.0"
+          minHeight="46.0"
+          onMouseDragged="#dragWindow"
+          onMousePressed="#rememberDragOffset"
+          prefHeight="46.0"
+          spacing="10.0"
+          styleClass="main-title-bar">
+      <children>
+        <HBox alignment="CENTER_LEFT" spacing="5.0" styleClass="title-brand-group">
+          <children>
+            <StackPane prefHeight="22.0" prefWidth="22.0" styleClass="brand-mark-shell">
+              <children>
+                <FontIcon iconLiteral="codicon-pinned:13" styleClass="brand-glyph-icon" />
+              </children>
+            </StackPane>
+            <Label styleClass="main-title-text" text="CoNote" />
+          </children>
+        </HBox>
+        <Region HBox.hgrow="ALWAYS" />
+        <HBox alignment="CENTER_RIGHT" spacing="2.0" styleClass="title-controls-group">
+          <children>
+            <StackPane fx:id="menuButton"
+                       onMouseClicked="#showMenuFromAction"
+                       onMouseEntered="#handleMenuHoverEntered"
+                       onMouseExited="#handleMenuHoverExited"
+                       pickOnBounds="true">
+              <styleClass>
+                <String fx:value="title-icon-button" />
+                <String fx:value="window-control-button" />
+              </styleClass>
+              <children>
+                <FontIcon iconLiteral="codicon-ellipsis:16" styleClass="title-bar-icon" />
+              </children>
+            </StackPane>
+            <VBox alignment="CENTER" prefHeight="18.0" styleClass="title-controls-divider-shell">
+              <children>
+                <Label styleClass="title-controls-divider" text="|" />
+              </children>
+            </VBox>
+            <StackPane fx:id="minimizeButton"
+                       onMouseClicked="#minimizeWindow"
+                       pickOnBounds="true">
+              <styleClass>
+                <String fx:value="title-icon-button" />
+                <String fx:value="window-control-button" />
+              </styleClass>
+              <children>
+                <FontIcon iconLiteral="codicon-chrome-minimize:15" styleClass="title-bar-icon" />
+              </children>
+            </StackPane>
+            <StackPane fx:id="closeButton"
+                       onMouseClicked="#closeWindow"
+                       pickOnBounds="true">
+              <styleClass>
+                <String fx:value="title-close-button" />
+                <String fx:value="window-control-button" />
+              </styleClass>
+              <children>
+                <FontIcon iconLiteral="codicon-chrome-close:15" styleClass="title-bar-icon" />
+              </children>
+            </StackPane>
+          </children>
+        </HBox>
+      </children>
+    </HBox>
+  </children>
+</StackPane>

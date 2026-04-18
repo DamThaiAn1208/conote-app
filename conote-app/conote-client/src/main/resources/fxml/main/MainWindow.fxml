@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:controller="com.conote.client.controller.MainWindowController"
+           fx:id="root"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           styleClass="app-root">
+  <children>
+    <StackPane fx:id="windowFrame" maxHeight="Infinity" maxWidth="480.0" minWidth="480.0" prefWidth="480.0" StackPane.alignment="TOP_CENTER">
+      <children>
+        <VBox fx:id="mainWindowShell" maxHeight="Infinity" maxWidth="480.0" minWidth="480.0" prefWidth="480.0" spacing="0.0">
+          <styleClass>
+            <String fx:value="surface-shell" />
+            <String fx:value="main-window-shell" />
+          </styleClass>
+          <children>
+            <fx:include fx:id="titleBar" source="MainTitleBar.fxml" />
+            <VBox spacing="18.0" styleClass="main-window-body" VBox.vgrow="ALWAYS">
+              <padding>
+                <Insets bottom="16.0" left="16.0" right="16.0" top="14.0" />
+              </padding>
+              <children>
+                <fx:include fx:id="searchBar" source="SearchBar.fxml" />
+                <fx:include fx:id="filterPanel" source="FilterPanel.fxml" />
+                <fx:include fx:id="createNoteButton" source="CreateNoteButton.fxml" />
+                <StackPane styleClass="note-list-surface" VBox.vgrow="ALWAYS">
+                  <children>
+                    <StackPane fx:id="loadingStatePane">
+                      <children>
+                        <fx:include source="../shared/LoadingSkeleton.fxml" />
+                      </children>
+                    </StackPane>
+                    <StackPane fx:id="emptyStatePane">
+                      <children>
+                        <fx:include fx:id="emptyState" source="../shared/EmptyState.fxml" />
+                      </children>
+                    </StackPane>
+                    <StackPane fx:id="listStatePane">
+                      <children>
+                        <fx:include fx:id="noteList" source="NoteList.fxml" />
+                      </children>
+                    </StackPane>
+                  </children>
+                </StackPane>
+              </children>
+            </VBox>
+          </children>
+        </VBox>
+        <StackPane fx:id="overlayLayer" pickOnBounds="true" />
+      </children>
+    </StackPane>
+  </children>
+</StackPane>
