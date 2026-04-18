@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox fx:controller="com.conote.client.controller.UserMenuDropdownController"
+      fx:id="root"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      managed="false"
+      onMouseEntered="#handleMouseEntered"
+      onMouseExited="#handleMouseExited"
+      spacing="14.0"
+      styleClass="user-menu-dropdown"
+      visible="false">
+  <children>
+    <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="menu-user-row">
+      <children>
+        <StackPane prefHeight="42.0" prefWidth="42.0" styleClass="menu-avatar">
+          <children>
+            <Label styleClass="menu-avatar-label" text="A" />
+          </children>
+        </StackPane>
+        <VBox spacing="2.0">
+          <children>
+            <Label styleClass="menu-user-name" text="Alex Designer" />
+            <Label styleClass="menu-user-email" text="alex@noteflow.app" />
+          </children>
+        </VBox>
+      </children>
+    </HBox>
+    <VBox spacing="4.0" styleClass="menu-section">
+      <children>
+        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="menu-action-row">
+          <children>
+            <VBox spacing="2.0">
+              <children>
+                <Label styleClass="menu-action-label" text="Theme" />
+                <Label styleClass="menu-action-copy" text="Dark" />
+              </children>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="darkThemeToggle" mnemonicParsing="false" styleClass="menu-switch" />
+          </children>
+        </HBox>
+        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="menu-action-row">
+          <children>
+            <VBox spacing="2.0">
+              <children>
+                <Label styleClass="menu-action-label" text="Dock" />
+                <Label styleClass="menu-action-copy" text="Keep on desktop" />
+              </children>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="dockToggle" mnemonicParsing="false" styleClass="menu-switch" />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+    <Button fx:id="helpButton" mnemonicParsing="false" onAction="#openHelpDialog" styleClass="menu-help-button" text="Help">
+      <graphic>
+        <FontIcon iconLiteral="codicon-question:16" styleClass="menu-help-icon" />
+      </graphic>
+    </Button>
+  </children>
+</VBox>

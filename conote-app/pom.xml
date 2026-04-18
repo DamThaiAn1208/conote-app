@@ -30,6 +30,7 @@
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
         <javafx.version>25-ea+21</javafx.version>
+        <ikonli.version>12.4.0</ikonli.version>
     </properties>
 
     <dependencyManagement>
@@ -93,6 +94,18 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-fxml</artifactId>
                 <version>${javafx.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.kordamp.ikonli</groupId>
+                <artifactId>ikonli-javafx</artifactId>
+                <version>${ikonli.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.kordamp.ikonli</groupId>
+                <artifactId>ikonli-codicons-pack</artifactId>
+                <version>${ikonli.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane fx:controller="com.conote.client.controller.NoteWindowController"
+           fx:id="root"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           minHeight="420.0"
+           minWidth="640.0"
+           prefHeight="620.0"
+           prefWidth="900.0"
+           styleClass="note-window-root">
+  <children>
+    <StackPane fx:id="windowFrame" styleClass="note-window">
+      <children>
+        <VBox fx:id="windowShell" spacing="0.0" styleClass="note-window-shell">
+          <children>
+            <HBox fx:id="windowTitleBar"
+                  alignment="CENTER_LEFT"
+                  maxHeight="48.0"
+                  minHeight="48.0"
+                  onMouseDragged="#dragWindow"
+                  onMousePressed="#rememberDragOffset"
+                  prefHeight="48.0"
+                  spacing="10.0">
+              <styleClass>
+                <String fx:value="main-title-bar" />
+                <String fx:value="note-window-title-bar" />
+              </styleClass>
+              <children>
+                <Region HBox.hgrow="ALWAYS" />
+                <HBox alignment="CENTER_RIGHT" spacing="2.0" styleClass="title-controls-group">
+                  <children>
+                    <StackPane fx:id="windowMinimizeButton"
+                               onMouseClicked="#minimizeWindow"
+                               pickOnBounds="true">
+                      <styleClass>
+                        <String fx:value="title-icon-button" />
+                        <String fx:value="window-control-button" />
+                      </styleClass>
+                      <children>
+                        <FontIcon iconLiteral="codicon-chrome-minimize:15" styleClass="title-bar-icon" />
+                      </children>
+                    </StackPane>
+                    <StackPane fx:id="windowCloseButton"
+                               onMouseClicked="#closeWindow"
+                               pickOnBounds="true">
+                      <styleClass>
+                        <String fx:value="title-close-button" />
+                        <String fx:value="window-control-button" />
+                      </styleClass>
+                      <children>
+                        <FontIcon iconLiteral="codicon-chrome-close:15" styleClass="title-bar-icon" />
+                      </children>
+                    </StackPane>
+                  </children>
+                </HBox>
+              </children>
+            </HBox>
+            <VBox fx:id="noteContentShell" spacing="0.0" styleClass="note-content-shell" VBox.vgrow="ALWAYS">
+              <children>
+                <fx:include fx:id="noteHeader" source="NoteHeader.fxml" />
+                <HBox fx:id="noteBodyShell"
+                      fillHeight="true"
+                      styleClass="note-body-shell"
+                      VBox.vgrow="ALWAYS">
+                  <children>
+                    <AnchorPane fx:id="noteSidebarSpace"
+                                maxWidth="28.0"
+                                minWidth="28.0"
+                                prefWidth="28.0">
+                      <children>
+                        <fx:include fx:id="noteToolbar"
+                                    source="NoteToolbar.fxml"
+                                    AnchorPane.bottomAnchor="0.0"
+                                    AnchorPane.leftAnchor="0.0"
+                                    AnchorPane.topAnchor="0.0" />
+                      </children>
+                    </AnchorPane>
+                    <VBox fx:id="noteBodyContent" spacing="18.0" styleClass="note-body-content">
+                      <HBox.hgrow>ALWAYS</HBox.hgrow>
+                      <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="note-title-row">
+                          <children>
+                            <TextField fx:id="titleField"
+                                       promptText="Note title"
+                                       styleClass="note-title-field"
+                                       HBox.hgrow="ALWAYS" />
+                          </children>
+                        </HBox>
+                        <fx:include fx:id="textNoteEditor" source="TextNoteEditor.fxml" VBox.vgrow="ALWAYS" />
+                        <fx:include fx:id="checklistNoteEditor" source="ChecklistNoteEditor.fxml" VBox.vgrow="ALWAYS" />
+                        <FlowPane fx:id="tagFlow" hgap="8.0" vgap="8.0" />
+                        <HBox alignment="CENTER_RIGHT" spacing="8.0">
+                          <children>
+                            <Region HBox.hgrow="ALWAYS" />
+                            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                              <children>
+                                <Label fx:id="createdLabel" styleClass="note-footer-time" text="Created" />
+                                <Label fx:id="updatedLabel" styleClass="note-footer-time" text="Updated" />
+                              </children>
+                            </VBox>
+                          </children>
+                        </HBox>
+                      </children>
+                    </VBox>
+                  </children>
+                </HBox>
+              </children>
+            </VBox>
+          </children>
+        </VBox>
+        <StackPane fx:id="overlayLayer" pickOnBounds="true" />
+      </children>
+    </StackPane>
+  </children>
+</StackPane>

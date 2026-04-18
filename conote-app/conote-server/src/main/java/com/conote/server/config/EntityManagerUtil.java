@@ -5,7 +5,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
 public class EntityManagerUtil {
-    private static final String PERSISTENCE_UNIT_NAME = "libraryPU";
+    private static final String PERSISTENCE_UNIT_NAME = "conotePU";
     private static final EntityManagerFactory emf = buildEntityManagerFactory();
 
     private static EntityManagerFactory buildEntityManagerFactory() {

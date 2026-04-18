@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox fx:controller="com.conote.client.controller.SearchBarController"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      alignment="CENTER_LEFT"
+      spacing="10.0">
+  <children>
+    <HBox alignment="CENTER_LEFT" spacing="8.0" styleClass="search-shell" HBox.hgrow="ALWAYS">
+      <children>
+        <FontIcon iconLiteral="codicon-search:16" styleClass="search-icon" />
+        <TextField fx:id="searchField" promptText="Search notes..." styleClass="search-field" HBox.hgrow="ALWAYS" />
+      </children>
+    </HBox>
+    <Button fx:id="filterButton" mnemonicParsing="false" onAction="#toggleFilters" styleClass="filter-toggle-button">
+      <graphic>
+        <FontIcon iconLiteral="codicon-filter:17" styleClass="filter-icon" />
+      </graphic>
+    </Button>
+  </children>
+</HBox>

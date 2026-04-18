@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane fx:controller="com.conote.client.controller.NoteHeaderController"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <VBox spacing="0.0" styleClass="note-header-shell">
+      <children>
+        <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="note-action-row">
+          <padding>
+            <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+          </padding>
+          <children>
+            <ToggleButton fx:id="pinButton" mnemonicParsing="false" onAction="#togglePin" styleClass="note-top-icon-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-pinned:16" styleClass="toolbar-icon" />
+              </graphic>
+            </ToggleButton>
+            <Button fx:id="colorButton" mnemonicParsing="false" onAction="#toggleColorPicker" styleClass="note-top-icon-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-color-mode:16" styleClass="toolbar-icon" />
+              </graphic>
+            </Button>
+            <Button fx:id="tagButton" mnemonicParsing="false" onAction="#toggleTagSelector" styleClass="note-top-icon-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-tag:16" styleClass="toolbar-icon" />
+              </graphic>
+            </Button>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="shareButton" mnemonicParsing="false" onAction="#openShareDialog" styleClass="share-action-button note-share-button" text="Share">
+              <graphic>
+                <FontIcon iconLiteral="codicon-live-share:16" styleClass="button-leading-icon" />
+              </graphic>
+            </Button>
+            <Region maxWidth="1.0" minWidth="1.0" prefWidth="1.0" styleClass="note-action-divider" />
+            <Button fx:id="deleteButton" mnemonicParsing="false" onAction="#confirmDelete" styleClass="note-top-danger-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-trash:16" styleClass="toolbar-icon" />
+              </graphic>
+            </Button>
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+    <fx:include fx:id="colorPickerPopover" source="ColorPickerPopover.fxml" />
+    <fx:include fx:id="tagSelector" source="TagSelector.fxml" />
+  </children>
+</StackPane>

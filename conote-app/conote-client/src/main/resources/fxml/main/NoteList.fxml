@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fx:controller="com.conote.client.controller.NoteListController"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            styleClass="note-list-scroll">
+  <content>
+    <VBox fx:id="listRoot" spacing="12.0" styleClass="note-list-root" />
+  </content>
+</ScrollPane>

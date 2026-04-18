@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane fx:controller="com.conote.client.controller.ShareDialogController"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           alignment="CENTER"
+           onMouseClicked="#closeOnBackdrop"
+           styleClass="dialog-backdrop">
+  <children>
+    <VBox maxWidth="540.0" onMouseClicked="#consume" prefWidth="540.0" spacing="16.0" styleClass="dialog-card">
+      <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+      </padding>
+      <children>
+        <HBox alignment="CENTER_LEFT" spacing="8.0">
+          <children>
+            <Label styleClass="dialog-title" text="Share note" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#closeDialog" styleClass="title-icon-button window-control-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-close:16" styleClass="title-bar-icon" />
+              </graphic>
+            </Button>
+          </children>
+        </HBox>
+        <Label fx:id="noteTitleLabel" styleClass="dialog-subtitle" text="Note title" />
+        <HBox spacing="10.0">
+          <children>
+            <TextField fx:id="emailField" promptText="Enter email..." styleClass="popover-input" HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="permissionCombo" prefWidth="110.0" styleClass="filter-combo" />
+            <Button mnemonicParsing="false" onAction="#inviteMember" styleClass="primary-compact-button" text="Invite" />
+          </children>
+        </HBox>
+        <Separator />
+        <VBox spacing="10.0">
+          <children>
+            <Label styleClass="section-kicker" text="PEOPLE WITH ACCESS" />
+            <VBox fx:id="memberList" spacing="10.0" />
+          </children>
+        </VBox>
+        <Separator />
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+          <children>
+            <Label styleClass="dialog-subtitle" text="Share via link" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#copyLink" styleClass="secondary-action-button" text="Copy link" />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+  </children>
+</StackPane>

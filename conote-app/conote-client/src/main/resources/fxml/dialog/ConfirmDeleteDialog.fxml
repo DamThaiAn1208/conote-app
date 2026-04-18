@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:controller="com.conote.client.controller.ConfirmDeleteDialogController"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           alignment="CENTER"
+           onMouseClicked="#closeOnBackdrop"
+           styleClass="dialog-backdrop">
+  <children>
+    <VBox maxWidth="420.0" onMouseClicked="#consume" prefWidth="420.0" spacing="14.0" styleClass="dialog-card">
+      <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+      </padding>
+      <children>
+        <Label styleClass="dialog-title" text="Delete note?" />
+        <Label fx:id="copyLabel" styleClass="dialog-copy" text="Delete this note permanently?" wrapText="true" />
+        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+          <children>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#closeDialog" styleClass="secondary-action-button" text="Cancel" />
+            <Button mnemonicParsing="false" onAction="#confirmDelete" styleClass="danger-solid-button" text="Delete" />
+          </children>
+        </HBox>
+      </children>
+    </VBox>
+  </children>
+</StackPane>
