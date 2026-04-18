@@ -2,6 +2,8 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -28,9 +30,18 @@
       <children>
         <HBox alignment="CENTER_LEFT" spacing="5.0" styleClass="title-brand-group">
           <children>
-            <StackPane prefHeight="22.0" prefWidth="22.0" styleClass="brand-mark-shell">
+            <StackPane prefHeight="24.0" prefWidth="24.0" styleClass="brand-mark-shell">
               <children>
-                <FontIcon iconLiteral="codicon-pinned:13" styleClass="brand-glyph-icon" />
+                <ImageView fitHeight="20.0"
+                           fitWidth="20.0"
+                           mouseTransparent="true"
+                           pickOnBounds="false"
+                           preserveRatio="true"
+                           smooth="true">
+                  <image>
+                    <Image url="@../../icons/logo.png" />
+                  </image>
+                </ImageView>
               </children>
             </StackPane>
             <Label styleClass="main-title-text" text="CoNote" />

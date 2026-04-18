@@ -32,19 +32,19 @@
           <children>
             <HBox fx:id="windowTitleBar"
                   alignment="CENTER_LEFT"
-                  maxHeight="48.0"
-                  minHeight="48.0"
+                  maxHeight="38.0"
+                  minHeight="38.0"
                   onMouseDragged="#dragWindow"
                   onMousePressed="#rememberDragOffset"
-                  prefHeight="48.0"
-                  spacing="10.0">
+                  prefHeight="38.0"
+                  spacing="12.0">
               <styleClass>
                 <String fx:value="main-title-bar" />
                 <String fx:value="note-window-title-bar" />
               </styleClass>
               <children>
                 <Region HBox.hgrow="ALWAYS" />
-                <HBox alignment="CENTER_RIGHT" spacing="2.0" styleClass="title-controls-group">
+                <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="title-controls-group">
                   <children>
                     <StackPane fx:id="windowMinimizeButton"
                                onMouseClicked="#minimizeWindow"
@@ -81,9 +81,9 @@
                       VBox.vgrow="ALWAYS">
                   <children>
                     <AnchorPane fx:id="noteSidebarSpace"
-                                maxWidth="28.0"
-                                minWidth="28.0"
-                                prefWidth="28.0">
+                                maxWidth="24.0"
+                                minWidth="24.0"
+                                prefWidth="24.0">
                       <children>
                         <fx:include fx:id="noteToolbar"
                                     source="NoteToolbar.fxml"

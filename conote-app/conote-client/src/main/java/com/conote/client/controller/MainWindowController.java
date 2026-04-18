@@ -89,8 +89,8 @@ public class MainWindowController {
     overlayLayer.maxHeightProperty().bind(windowFrame.heightProperty());
     overlayClip.widthProperty().bind(overlayLayer.widthProperty());
     overlayClip.heightProperty().bind(overlayLayer.heightProperty());
-    overlayClip.setArcWidth(28.0);
-    overlayClip.setArcHeight(28.0);
+    overlayClip.setArcWidth(10.0);
+    overlayClip.setArcHeight(10.0);
     overlayLayer.setClip(overlayClip);
     applyTheme();
 

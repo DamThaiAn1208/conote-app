@@ -54,7 +54,7 @@ public class ClientApplication extends Application {
   }
 
   private void installWindowIcon(Stage stage) {
-    try (InputStream stream = ClientApplication.class.getResourceAsStream("/icons/icon.png")) {
+    try (InputStream stream = ClientApplication.class.getResourceAsStream("/icons/logo.png")) {
       if (stream != null) {
         stage.getIcons().add(new Image(stream));
       }

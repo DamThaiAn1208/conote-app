@@ -28,7 +28,11 @@
                 <fx:include fx:id="searchBar" source="SearchBar.fxml" />
                 <fx:include fx:id="filterPanel" source="FilterPanel.fxml" />
                 <fx:include fx:id="createNoteButton" source="CreateNoteButton.fxml" />
-                <StackPane styleClass="note-list-surface" VBox.vgrow="ALWAYS">
+                <StackPane VBox.vgrow="ALWAYS">
+                  <styleClass>
+                    <String fx:value="surface-shell" />
+                    <String fx:value="note-list-surface" />
+                  </styleClass>
                   <children>
                     <StackPane fx:id="loadingStatePane">
                       <children>

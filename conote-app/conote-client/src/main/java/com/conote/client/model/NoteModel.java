@@ -1,5 +1,6 @@
 package com.conote.client.model;
 
+import com.conote.client.util.RichTextContentCodec;
 import com.conote.common.enums.NoteType;
 import java.util.UUID;
 import javafx.beans.Observable;
@@ -90,6 +91,14 @@ public class NoteModel {
     return content;
   }
 
+  public String getPlainTextContent() {
+    return RichTextContentCodec.toPlainText(getContent());
+  }
+
+  public boolean hasRichTextFormatting() {
+    return RichTextContentCodec.hasRichFormatting(getContent());
+  }
+
   public NoteColor getColor() {
     return color.get();
   }
@@ -159,7 +168,7 @@ public class NoteModel {
   }
 
   public String getPreviewText() {
-    String collapsed = getContent().replaceAll("\\s+", " ").trim();
+    String collapsed = getPlainTextContent().replaceAll("\\s+", " ").trim();
     if (collapsed.isBlank()) {
       return "";
     }

@@ -30,6 +30,7 @@
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
         <javafx.version>22.0.1</javafx.version>
+        <richtextfx.version>0.11.7</richtextfx.version>
         <ikonli.version>12.4.0</ikonli.version>
     </properties>
 
@@ -112,6 +113,18 @@
                 <groupId>org.kordamp.ikonli</groupId>
                 <artifactId>ikonli-codicons-pack</artifactId>
                 <version>${ikonli.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.kordamp.ikonli</groupId>
+                <artifactId>ikonli-fontawesome5-pack</artifactId>
+                <version>${ikonli.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fxmisc.richtext</groupId>
+                <artifactId>richtextfx</artifactId>
+                <version>${richtextfx.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

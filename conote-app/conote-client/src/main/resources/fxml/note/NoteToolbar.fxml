@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -14,59 +14,73 @@
            xmlns:fx="http://javafx.com/fxml/1"
            alignment="BOTTOM_RIGHT"
            maxHeight="1.7976931348623157E308"
-           maxWidth="108.0"
-           minWidth="108.0"
+           maxWidth="80.0"
+           minWidth="80.0"
            pickOnBounds="false"
-           prefWidth="108.0"
+           prefWidth="80.0"
             styleClass="note-toolbar-shell">
   <children>
     <VBox fx:id="toolRail"
           alignment="TOP_CENTER"
           maxHeight="1.7976931348623157E308"
-          maxWidth="94.0"
-          minWidth="94.0"
-          prefWidth="94.0"
+          maxWidth="68.0"
+          minWidth="68.0"
+          prefWidth="68.0"
           spacing="10.0"
           styleClass="note-toolbar-panel"
           StackPane.alignment="TOP_LEFT">
       <padding>
-        <Insets bottom="56.0" left="10.0" right="10.0" top="18.0" />
+        <Insets bottom="42.0" left="8.0" right="8.0" top="10.0" />
       </padding>
       <children>
-        <Button fx:id="resetTextStyleButton"
-                mnemonicParsing="false"
-                onAction="#resetTypography"
-                styleClass="note-side-tool-button"
-                text="T" />
-        <Separator fx:id="formattingTopDivider" prefWidth="24.0" styleClass="note-toolbar-divider" />
-        <VBox fx:id="formattingGroup" alignment="TOP_CENTER" spacing="10.0">
+        <VBox fx:id="formattingGroup" alignment="TOP_CENTER" spacing="8.0">
           <children>
             <ToggleButton fx:id="boldToggle"
                           mnemonicParsing="false"
-                          onAction="#toggleBold"
-                          styleClass="note-side-tool-button"
-                          text="B" />
+                          onAction="#toggleBold">
+              <styleClass>
+                <String fx:value="note-side-tool-button" />
+                <String fx:value="note-side-tool-icon-button" />
+              </styleClass>
+              <graphic>
+                <FontIcon iconLiteral="fas-bold:13" styleClass="note-format-icon" />
+              </graphic>
+            </ToggleButton>
             <ToggleButton fx:id="italicToggle"
                           mnemonicParsing="false"
-                          onAction="#toggleItalic"
-                          styleClass="note-side-tool-button note-side-tool-button-italic"
-                          text="I" />
+                          onAction="#toggleItalic">
+              <styleClass>
+                <String fx:value="note-side-tool-button" />
+                <String fx:value="note-side-tool-icon-button" />
+              </styleClass>
+              <graphic>
+                <FontIcon iconLiteral="fas-italic:13" styleClass="note-format-icon" />
+              </graphic>
+            </ToggleButton>
             <ToggleButton fx:id="underlineToggle"
                           mnemonicParsing="false"
-                          onAction="#toggleUnderline"
-                          styleClass="note-side-tool-button note-side-tool-button-underline"
-                          text="U" />
+                          onAction="#toggleUnderline">
+              <styleClass>
+                <String fx:value="note-side-tool-button" />
+                <String fx:value="note-side-tool-icon-button" />
+              </styleClass>
+              <graphic>
+                <FontIcon iconLiteral="fas-underline:13" styleClass="note-format-icon" />
+              </graphic>
+            </ToggleButton>
+            <ToggleButton fx:id="strikethroughToggle"
+                          mnemonicParsing="false"
+                          onAction="#toggleStrikethrough">
+              <styleClass>
+                <String fx:value="note-side-tool-button" />
+                <String fx:value="note-side-tool-icon-button" />
+              </styleClass>
+              <graphic>
+                <FontIcon iconLiteral="fas-strikethrough:13" styleClass="note-format-icon" />
+              </graphic>
+            </ToggleButton>
           </children>
         </VBox>
-        <Separator fx:id="formattingBottomDivider" prefWidth="24.0" styleClass="note-toolbar-divider" />
-        <Button fx:id="mediaButton"
-                mnemonicParsing="false"
-                onAction="#toggleMediaTool"
-                styleClass="note-side-tool-button note-side-tool-icon-button">
-          <graphic>
-            <FontIcon iconLiteral="codicon-file-media:16" styleClass="toolbar-icon" />
-          </graphic>
-        </Button>
       </children>
     </VBox>
     <Button fx:id="sidebarToggleButton"
@@ -75,7 +89,7 @@
             styleClass="note-sidebar-toggle-button"
             StackPane.alignment="BOTTOM_RIGHT">
       <StackPane.margin>
-        <Insets bottom="18.0" right="0.0" />
+        <Insets bottom="10.0" right="0.0" />
       </StackPane.margin>
       <graphic>
         <FontIcon fx:id="sidebarToggleIcon"

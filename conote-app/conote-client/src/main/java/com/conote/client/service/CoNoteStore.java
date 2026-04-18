@@ -8,6 +8,7 @@ import com.conote.common.enums.NoteType;
 import com.conote.common.enums.SharePermission;
 import com.conote.client.model.ShareMember;
 import com.conote.client.model.SortMode;
+import com.conote.client.util.RichTextContentCodec;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -127,7 +128,7 @@ public class CoNoteStore {
     String query = searchQuery.get() == null ? "" : searchQuery.get().trim().toLowerCase(Locale.ROOT);
     if (!query.isBlank()) {
       boolean matchText = safe(note.getTitle()).contains(query)
-          || safe(note.getContent()).contains(query)
+          || safe(note.getPlainTextContent()).contains(query)
           || note.getChecklistItems().stream()
               .map(ChecklistItemModel::getText)
               .map(this::safe)
@@ -239,6 +240,10 @@ public class CoNoteStore {
       note.setContent(value);
       scheduleTouch(note);
     }
+  }
+
+  public void updatePlainTextContent(NoteModel note, String value) {
+    updateContent(note, RichTextContentCodec.plainText(value));
   }
 
   public void togglePin(NoteModel note) {

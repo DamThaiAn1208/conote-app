@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.embed.swing.SwingNode?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -17,8 +17,11 @@
                styleClass="text-note-editor"
                VBox.vgrow="ALWAYS">
       <children>
-        <SwingNode fx:id="editorHost"
-                   pickOnBounds="true" />
+        <Label fx:id="promptLabel"
+               mouseTransparent="true"
+               text="Start writing your note..."
+               visible="false"
+               styleClass="text-note-editor-prompt" />
       </children>
     </StackPane>
   </children>

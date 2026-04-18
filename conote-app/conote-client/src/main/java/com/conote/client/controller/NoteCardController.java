@@ -118,8 +118,8 @@ public class NoteCardController {
 
     titleField.textProperty().addListener((obs, oldValue, newValue) -> store.updateTitle(note, newValue));
     quickTextArea.textProperty().addListener((obs, oldValue, newValue) -> {
-      if (note.getType() == NoteType.TEXT) {
-        store.updateContent(note, newValue);
+      if (note.getType() == NoteType.TEXT && quickTextArea.isEditable()) {
+        store.updatePlainTextContent(note, newValue);
         updateQuickTextHeight();
       }
     });
@@ -202,6 +202,7 @@ public class NoteCardController {
     refreshDate();
     refreshTags();
     refreshSurface();
+    syncQuickTextMode();
     refreshEditorVisibility();
 
     if (note.getType() == NoteType.TEXT) {
@@ -384,6 +385,7 @@ public class NoteCardController {
       return;
     }
     refreshPreview();
+    syncQuickTextMode();
     syncQuickTextFromModel();
   }
 
@@ -409,13 +411,20 @@ public class NoteCardController {
   }
 
   private void syncQuickTextFromModel() {
-    if (!quickTextArea.isFocused() && !quickTextArea.getText().equals(note.getContent())) {
-      quickTextArea.setText(note.getContent());
+    String plainText = note.getPlainTextContent();
+    if (!quickTextArea.isFocused() && !quickTextArea.getText().equals(plainText)) {
+      quickTextArea.setText(plainText);
     }
     updateQuickTextHeight();
     if (expanded.get()) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
+  }
+
+  private void syncQuickTextMode() {
+    boolean richText = note.getType() == NoteType.TEXT && note.hasRichTextFormatting();
+    quickTextArea.setEditable(!richText);
+    quickTextArea.setFocusTraversable(!richText);
   }
 
   private HBox buildChecklistRow(ChecklistItemModel item) {

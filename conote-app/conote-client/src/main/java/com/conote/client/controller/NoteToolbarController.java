@@ -7,19 +7,18 @@ import com.conote.client.util.MotionSupport;
 import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.util.Duration;
 
 public class NoteToolbarController {
-  static final double ROOT_WIDTH = 108.0;
-  static final double HANDLE_WIDTH = 28.0;
+  static final double ROOT_WIDTH = 80.0;
+  static final double HANDLE_WIDTH = 24.0;
   static final double COLLAPSED_ROOT_TRANSLATE = -(ROOT_WIDTH - HANDLE_WIDTH);
-  static final double COLLAPSED_TOOL_TRANSLATE = -18.0;
+  static final double COLLAPSED_TOOL_TRANSLATE = -12.0;
   static final Duration SIDEBAR_ANIMATION_DURATION = Duration.millis(280);
   static final Interpolator SIDEBAR_INTERPOLATOR =
       Interpolator.SPLINE(0.22, 0.61, 0.36, 1.0);
@@ -31,16 +30,7 @@ public class NoteToolbarController {
   private VBox toolRail;
 
   @FXML
-  private Button resetTextStyleButton;
-
-  @FXML
-  private Separator formattingTopDivider;
-
-  @FXML
   private VBox formattingGroup;
-
-  @FXML
-  private Separator formattingBottomDivider;
 
   @FXML
   private ToggleButton boldToggle;
@@ -52,7 +42,7 @@ public class NoteToolbarController {
   private ToggleButton underlineToggle;
 
   @FXML
-  private Button mediaButton;
+  private ToggleButton strikethroughToggle;
 
   @FXML
   private Button sidebarToggleButton;
@@ -64,15 +54,15 @@ public class NoteToolbarController {
   private Consumer<Boolean> sidebarStateListener;
   private Consumer<Boolean> sidebarToggleHandler;
   private boolean collapsed;
+  private boolean syncingFormattingState;
   private final Rectangle toolRailClip = new Rectangle();
 
   @FXML
   private void initialize() {
-    MotionSupport.installButtonMotion(resetTextStyleButton);
     MotionSupport.installButtonMotion(boldToggle);
     MotionSupport.installButtonMotion(italicToggle);
     MotionSupport.installButtonMotion(underlineToggle);
-    MotionSupport.installButtonMotion(mediaButton);
+    MotionSupport.installButtonMotion(strikethroughToggle);
     MotionSupport.installButtonMotion(sidebarToggleButton);
 
     toolRailClip.widthProperty().bind(root.widthProperty());
@@ -82,10 +72,11 @@ public class NoteToolbarController {
 
   public void setContext(NoteModel note, TextNoteEditorController textNoteEditorController) {
     this.textNoteEditorController = textNoteEditorController;
+    this.textNoteEditorController.setFormattingStateListener(this::syncFormattingState);
 
     updateVisibility(note.getType() == NoteType.TEXT);
-    note.typeProperty().addListener((obs, oldValue, newValue) -> updateVisibility(newValue == NoteType.TEXT));
-    applyTypography();
+    note.typeProperty().addListener((obs, oldValue, newValue) ->
+        updateVisibility(newValue == NoteType.TEXT));
     applyCollapsedState(true);
   }
 
@@ -98,31 +89,31 @@ public class NoteToolbarController {
   }
 
   @FXML
-  private void resetTypography() {
-    boldToggle.setSelected(false);
-    italicToggle.setSelected(false);
-    underlineToggle.setSelected(false);
-    applyTypography();
-  }
-
-  @FXML
   private void toggleBold() {
-    applyTypography();
+    if (!syncingFormattingState && textNoteEditorController != null) {
+      textNoteEditorController.setBoldSelected(boldToggle.isSelected());
+    }
   }
 
   @FXML
   private void toggleItalic() {
-    applyTypography();
+    if (!syncingFormattingState && textNoteEditorController != null) {
+      textNoteEditorController.setItalicSelected(italicToggle.isSelected());
+    }
   }
 
   @FXML
   private void toggleUnderline() {
-    applyTypography();
+    if (!syncingFormattingState && textNoteEditorController != null) {
+      textNoteEditorController.setUnderlineSelected(underlineToggle.isSelected());
+    }
   }
 
   @FXML
-  private void toggleMediaTool() {
-    // Placeholder control for the image/media tool from the mockup.
+  private void toggleStrikethrough() {
+    if (!syncingFormattingState && textNoteEditorController != null) {
+      textNoteEditorController.setStrikethroughSelected(strikethroughToggle.isSelected());
+    }
   }
 
   @FXML
@@ -132,22 +123,12 @@ public class NoteToolbarController {
     }
   }
 
-  private void applyTypography() {
-    if (textNoteEditorController != null) {
-      textNoteEditorController.applyTypography(
-          boldToggle.isSelected(), italicToggle.isSelected(), underlineToggle.isSelected());
-    }
-  }
-
   private void updateVisibility(boolean visible) {
     formattingGroup.setVisible(visible);
     formattingGroup.setManaged(visible);
-    resetTextStyleButton.setVisible(visible);
-    resetTextStyleButton.setManaged(visible);
-    formattingTopDivider.setVisible(visible);
-    formattingTopDivider.setManaged(visible);
-    formattingBottomDivider.setVisible(visible);
-    formattingBottomDivider.setManaged(visible);
+    if (!visible) {
+      syncFormattingState(TextNoteEditorController.FormattingState.PLAIN);
+    }
   }
 
   public void prepareSidebarAnimation(boolean collapsed) {
@@ -186,6 +167,20 @@ public class NoteToolbarController {
   private void updateToggleIcon(boolean collapsed) {
     sidebarToggleIcon.setIconLiteral(
         collapsed ? "codicon-chevron-right:16" : "codicon-chevron-left:16");
+  }
+
+  private void syncFormattingState(TextNoteEditorController.FormattingState formattingState) {
+    TextNoteEditorController.FormattingState state =
+        formattingState == null ? TextNoteEditorController.FormattingState.PLAIN : formattingState;
+    syncingFormattingState = true;
+    try {
+      boldToggle.setSelected(state.bold());
+      italicToggle.setSelected(state.italic());
+      underlineToggle.setSelected(state.underline());
+      strikethroughToggle.setSelected(state.strikethrough());
+    } finally {
+      syncingFormattingState = false;
+    }
   }
 
   private void updateSidebarState(boolean collapsed) {

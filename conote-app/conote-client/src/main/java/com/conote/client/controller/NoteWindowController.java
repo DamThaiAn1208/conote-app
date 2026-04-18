@@ -106,13 +106,13 @@ public class NoteWindowController {
     overlayLayer.setMouseTransparent(true);
     windowShellClip.widthProperty().bind(windowShell.widthProperty());
     windowShellClip.heightProperty().bind(windowShell.heightProperty());
-    windowShellClip.setArcWidth(44.0);
-    windowShellClip.setArcHeight(44.0);
+    windowShellClip.setArcWidth(10.0);
+    windowShellClip.setArcHeight(10.0);
     windowShell.setClip(windowShellClip);
     overlayClip.widthProperty().bind(windowFrame.widthProperty());
     overlayClip.heightProperty().bind(windowFrame.heightProperty());
-    overlayClip.setArcWidth(44.0);
-    overlayClip.setArcHeight(44.0);
+    overlayClip.setArcWidth(10.0);
+    overlayClip.setArcHeight(10.0);
     overlayLayer.setClip(overlayClip);
   }
 
