@@ -13,9 +13,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.GaussianBlur;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -74,9 +77,12 @@ public class MainWindowController {
     titleBarController.setContext(store, this);
     searchBarController.setContext(store, this::toggleFilters);
     filterPanelController.setContext(store);
-    createNoteButtonController.setContext(store);
+    createNoteButtonController.setContext(store, this::openNoteWindow);
     noteListController.setContext(store, this);
-    emptyStateController.setCreateAction(() -> store.createNote(NoteType.TEXT));
+    emptyStateController.setCreateAction(() -> {
+      NoteModel note = store.createNote(NoteType.TEXT);
+      openNoteWindow(note);
+    });
 
     overlayLayer.setVisible(false);
     overlayLayer.setManaged(false);
@@ -92,6 +98,7 @@ public class MainWindowController {
     overlayClip.setArcWidth(28.0);
     overlayClip.setArcHeight(28.0);
     overlayLayer.setClip(overlayClip);
+    root.addEventHandler(MouseEvent.MOUSE_CLICKED, this::clearSelectedNoteOnOutsideClick);
     applyTheme();
 
     ChangeListener<Object> refreshListener = (obs, oldValue, newValue) -> refreshStates();
@@ -177,6 +184,18 @@ public class MainWindowController {
     return store;
   }
 
+  private void clearSelectedNoteOnOutsideClick(MouseEvent event) {
+    if (event.getButton() != MouseButton.PRIMARY || overlayLayer.isVisible()) {
+      return;
+    }
+
+    if (event.getTarget() instanceof Node node && isInsideNoteCard(node)) {
+      return;
+    }
+
+    store.setExpandedNoteId(null);
+  }
+
   private void toggleFilters() {
     filterPanelController.setExpanded(!filterPanelController.isExpanded());
   }
@@ -212,6 +231,17 @@ public class MainWindowController {
   private void setVisible(StackPane pane, boolean visible) {
     pane.setVisible(visible);
     pane.setManaged(visible);
+  }
+
+  private boolean isInsideNoteCard(Node node) {
+    Node current = node;
+    while (current != null) {
+      if (current.getStyleClass().contains("note-card")) {
+        return true;
+      }
+      current = current.getParent();
+    }
+    return false;
   }
 
   private Stage currentStage() {

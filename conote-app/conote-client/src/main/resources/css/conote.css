@@ -556,15 +556,33 @@
   -fx-alignment: center-left;
   -fx-padding: 12px 16px;
   -fx-cursor: hand;
+  -fx-background-insets: 0;
+}
+
+.create-note-menu {
+  -fx-padding: 1px;
 }
 
 .create-menu-row:hover {
   -fx-background-color: rgba(214, 223, 236, 0.98);
+  -fx-background-radius: 0;
+}
+
+.create-menu-row-first:hover {
+  -fx-background-radius: 17px 17px 0 0;
 }
 
 .create-menu-row-last {
   -fx-border-width: 1 0 0 0;
   -fx-border-color: #eef2f7 transparent transparent transparent;
+}
+
+.create-menu-row-last:hover {
+  -fx-background-radius: 0 0 17px 17px;
+}
+
+.create-menu-row-first.create-menu-row-last:hover {
+  -fx-background-radius: 17px;
 }
 
 .ghost-icon-pill {
@@ -1105,8 +1123,9 @@
 }
 
 .help-dialog-card {
-    -fx-background-color: rgba(255, 255, 255, 0.985);
-  }
+  -fx-background-color: rgba(255, 255, 255, 0.985);
+  -fx-padding: 24px 24px 20px 24px;
+}
 
 .dialog-title {
   -fx-text-fill: #0f172a;
@@ -1152,7 +1171,7 @@
   -fx-border-color: transparent;
   -fx-background-radius: 10px;
   -fx-border-radius: 10px;
-  -fx-padding: 6px 8px;
+  -fx-padding: 10px 12px;
   -fx-content-display: graphic-only;
   -fx-alignment: center-left;
   -fx-cursor: hand;
@@ -1170,11 +1189,6 @@
   -fx-text-fill: #475569;
   -fx-font-size: 14px;
   -fx-font-weight: 500;
-}
-
-.help-close-button {
-  -fx-background-radius: 10px;
-  -fx-padding: 9px 14px;
 }
 
 .secondary-action-button {

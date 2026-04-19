@@ -54,18 +54,18 @@ public class MainTitleBarController {
 
   @FXML
   private void showMenuFromAction() {
-    showMenu();
-  }
-
-  @FXML
-  private void handleMenuHoverEntered() {
-    cancelMenuHide();
+    if (isMenuShowing()) {
+      hideMenu();
+      return;
+    }
     showMenu();
   }
 
   @FXML
   private void handleMenuHoverExited() {
-    scheduleMenuHide();
+    if (isMenuShowing()) {
+      scheduleMenuHide();
+    }
   }
 
   @FXML

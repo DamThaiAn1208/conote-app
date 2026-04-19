@@ -28,7 +28,7 @@
           maxWidth="336.0"
           onMouseClicked="#consume"
           prefWidth="336.0"
-          spacing="18.0"
+          spacing="16.0"
           StackPane.alignment="CENTER">
       <styleClass>
         <String fx:value="surface-shell" />
@@ -47,9 +47,20 @@
               </children>
             </StackPane>
             <Label styleClass="dialog-title" text="H&#7895; tr&#7907;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <StackPane onMouseClicked="#closeDialogFromMouse"
+                       pickOnBounds="true">
+              <styleClass>
+                <String fx:value="title-close-button" />
+                <String fx:value="window-control-button" />
+              </styleClass>
+              <children>
+                <FontIcon iconLiteral="codicon-chrome-close:15" styleClass="title-bar-icon" />
+              </children>
+            </StackPane>
           </children>
         </HBox>
-        <VBox spacing="10.0">
+        <VBox spacing="8.0">
           <children>
             <Button maxWidth="Infinity" mnemonicParsing="false" styleClass="help-link-button">
               <graphic>
@@ -83,19 +94,6 @@
             </Button>
           </children>
         </VBox>
-        <HBox alignment="CENTER_RIGHT">
-          <children>
-            <Region HBox.hgrow="ALWAYS" />
-            <Button mnemonicParsing="false"
-                    onAction="#closeDialog"
-                    text="&#272;&#243;ng">
-              <styleClass>
-                <String fx:value="primary-compact-button" />
-                <String fx:value="help-close-button" />
-              </styleClass>
-            </Button>
-          </children>
-        </HBox>
       </children>
     </VBox>
   </children>

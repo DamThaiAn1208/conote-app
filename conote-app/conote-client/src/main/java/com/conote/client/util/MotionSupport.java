@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
@@ -23,26 +24,40 @@ public final class MotionSupport {
   }
 
   public static void installCardMotion(Node node) {
-    installResponsiveMotion(node, 1.0, -2.5, 0.98, 0.995);
+    installCardMotion(node, null);
+  }
+
+  public static void installCardMotion(Node node, ObservableBooleanValue suppressMotion) {
+    installResponsiveMotion(node, 1.0, -2.5, 0.98, 0.995, suppressMotion);
   }
 
   private static void installResponsiveMotion(Node node, double hoverScale, double hoverTranslateY,
       double baseOpacity, double pressedScale) {
+    installResponsiveMotion(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale, null);
+  }
+
+  private static void installResponsiveMotion(Node node, double hoverScale, double hoverTranslateY,
+      double baseOpacity, double pressedScale, ObservableBooleanValue suppressMotion) {
     node.setOpacity(baseOpacity);
     ChangeListener<Boolean> listener = (obs, oldValue, newValue) ->
-        animate(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale);
+        animate(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale, suppressMotion);
     node.hoverProperty().addListener(listener);
     node.pressedProperty().addListener(listener);
-    animate(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale);
+    if (suppressMotion != null) {
+      suppressMotion.addListener((obs, oldValue, newValue) ->
+          animate(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale, suppressMotion));
+    }
+    animate(node, hoverScale, hoverTranslateY, baseOpacity, pressedScale, suppressMotion);
   }
 
   private static void animate(Node node, double hoverScale, double hoverTranslateY,
-      double baseOpacity, double pressedScale) {
+      double baseOpacity, double pressedScale, ObservableBooleanValue suppressMotion) {
+    boolean suppressed = suppressMotion != null && suppressMotion.get();
     boolean pressed = node.isPressed();
     boolean hovered = node.isHover();
-    double scale = pressed ? pressedScale : hovered ? hoverScale : 1.0;
-    double opacity = hovered ? 1.0 : baseOpacity;
-    double translateY = hovered && !pressed ? hoverTranslateY : 0.0;
+    double scale = suppressed ? 1.0 : pressed ? pressedScale : hovered ? hoverScale : 1.0;
+    double opacity = suppressed ? 1.0 : hovered ? 1.0 : baseOpacity;
+    double translateY = suppressed ? 0.0 : hovered && !pressed ? hoverTranslateY : 0.0;
 
     Timeline timeline = (Timeline) node.getProperties().get(MOTION_TIMELINE_KEY);
     if (timeline != null) {

@@ -41,7 +41,6 @@
           <children>
             <StackPane fx:id="menuButton"
                        onMouseClicked="#showMenuFromAction"
-                       onMouseEntered="#handleMenuHoverEntered"
                        onMouseExited="#handleMenuHoverExited"
                        pickOnBounds="true">
               <styleClass>

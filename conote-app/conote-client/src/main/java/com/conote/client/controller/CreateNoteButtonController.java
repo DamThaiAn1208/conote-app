@@ -1,8 +1,10 @@
 package com.conote.client.controller;
 
 import com.conote.common.enums.NoteType;
+import com.conote.client.model.NoteModel;
 import com.conote.client.service.CoNoteStore;
 import com.conote.client.util.MotionSupport;
+import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
@@ -28,6 +30,7 @@ public class CreateNoteButtonController {
   private Button checklistNoteButton;
 
   private CoNoteStore store;
+  private Consumer<NoteModel> onNoteCreated;
 
   @FXML
   private void initialize() {
@@ -43,8 +46,9 @@ public class CreateNoteButtonController {
     setMenuVisible(false);
   }
 
-  public void setContext(CoNoteStore store) {
+  public void setContext(CoNoteStore store, Consumer<NoteModel> onNoteCreated) {
     this.store = store;
+    this.onNoteCreated = onNoteCreated;
     menu.prefWidthProperty().bind(primaryButton.widthProperty());
     menu.minWidthProperty().bind(primaryButton.widthProperty());
     menu.maxWidthProperty().bind(primaryButton.widthProperty());
@@ -57,18 +61,26 @@ public class CreateNoteButtonController {
 
   @FXML
   private void createTextNote() {
-    store.createNote(NoteType.TEXT);
+    NoteModel note = store.createNote(NoteType.TEXT);
     setMenuVisible(false);
+    openCreatedNote(note);
   }
 
   @FXML
   private void createChecklistNote() {
-    store.createNote(NoteType.CHECKLIST);
+    NoteModel note = store.createNote(NoteType.CHECKLIST);
     setMenuVisible(false);
+    openCreatedNote(note);
   }
 
   private void setMenuVisible(boolean visible) {
     menu.setVisible(visible);
     menu.setManaged(visible);
+  }
+
+  private void openCreatedNote(NoteModel note) {
+    if (note != null && onNoteCreated != null) {
+      onNoteCreated.accept(note);
+    }
   }
 }
