@@ -19,7 +19,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 public class NoteModel {
-  private final String id = UUID.randomUUID().toString();
+  private final String id;
   private final ObjectProperty<NoteType> type = new SimpleObjectProperty<>(this, "type");
   private final StringProperty title = new SimpleStringProperty(this, "title", "");
   private final StringProperty content = new SimpleStringProperty(this, "content", "");
@@ -34,6 +34,7 @@ public class NoteModel {
   private final ObservableList<ShareMember> shareMembers = FXCollections.observableArrayList();
 
   public NoteModel(
+      String id,
       NoteType type,
       String title,
       String content,
@@ -41,6 +42,7 @@ public class NoteModel {
       boolean pinned,
       long createdAt,
       long updatedAt) {
+    this.id = normalizeId(id);
     setType(type);
     setTitle(title);
     setContent(content);
@@ -49,6 +51,17 @@ public class NoteModel {
     setCreatedAt(createdAt);
     setUpdatedAt(updatedAt);
     installChangeTracking();
+  }
+
+  public NoteModel(
+      NoteType type,
+      String title,
+      String content,
+      NoteColor color,
+      boolean pinned,
+      long createdAt,
+      long updatedAt) {
+    this(UUID.randomUUID().toString(), type, title, content, color, pinned, createdAt, updatedAt);
   }
 
   public String getId() {
@@ -203,5 +216,9 @@ public class NoteModel {
 
   private void bumpRevision() {
     revision.set(revision.get() + 1);
+  }
+
+  private String normalizeId(String value) {
+    return value == null || value.isBlank() ? UUID.randomUUID().toString() : value;
   }
 }

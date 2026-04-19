@@ -1,5 +1,6 @@
 package com.conote.client.app;
 
+import com.conote.client.cache.ClientStoragePaths;
 import com.conote.client.controller.MainWindowController;
 import com.conote.client.util.LoadedView;
 import com.conote.client.util.ViewLoader;
@@ -24,9 +25,13 @@ public class ClientApplication extends Application {
 
   @Override
   public void start(Stage stage) {
+    ClientStoragePaths.init();
     LoadedView<MainWindowController> view = ViewLoader.load("/fxml/main/MainWindow.fxml");
 
-    Scene scene = new Scene(view.root(), 500, 760);
+    Scene scene = new Scene(
+        view.root(),
+        view.controller().getInitialWindowWidth(),
+        view.controller().getInitialWindowHeight());
     scene.setFill(Color.TRANSPARENT);
     scene.getStylesheets().add(stylesheetUrl());
 
@@ -35,6 +40,7 @@ public class ClientApplication extends Application {
     stage.setMinWidth(500);
     stage.setMinHeight(620);
     stage.setScene(scene);
+    view.controller().bindPrimaryStage(stage);
     installWindowIcon(stage);
     stage.show();
 

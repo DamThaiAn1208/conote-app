@@ -71,8 +71,7 @@ public class ChecklistNoteEditorController {
     box.setSelected(item.isChecked());
     box.selectedProperty().addListener((obs, oldValue, newValue) -> {
       if (item.isChecked() != newValue) {
-        item.setChecked(newValue);
-        note.touch();
+        store.toggleChecklistItem(note, item);
       }
     });
     item.checkedProperty().addListener((obs, oldValue, newValue) -> {

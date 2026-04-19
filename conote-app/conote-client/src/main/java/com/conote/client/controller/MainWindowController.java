@@ -100,7 +100,25 @@ public class MainWindowController {
     store.themeProperty().addListener((obs, oldValue, newValue) -> applyTheme());
 
     refreshStates();
-    store.bootstrapDemoData();
+  }
+
+  public double getInitialWindowWidth() {
+    return store.getWindowWidth();
+  }
+
+  public double getInitialWindowHeight() {
+    return store.getWindowHeight();
+  }
+
+  public void bindPrimaryStage(Stage stage) {
+    if (stage == null) {
+      return;
+    }
+
+    stage.widthProperty().addListener((obs, oldValue, newValue) ->
+        store.updateWindowSize(newValue.doubleValue(), stage.getHeight()));
+    stage.heightProperty().addListener((obs, oldValue, newValue) ->
+        store.updateWindowSize(stage.getWidth(), newValue.doubleValue()));
   }
 
   public void openNoteWindow(NoteModel note) {
