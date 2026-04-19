@@ -33,10 +33,9 @@
 
 .note-list-surface {
   -fx-background-color: rgba(248, 250, 252, 0.72);
-  -fx-background-radius: 5px;
+  -fx-background-radius: 16px;
   -fx-border-color: rgba(226, 232, 240, 0.86);
-  -fx-border-width: 0.9px;
-  -fx-border-radius: 5px;
+  -fx-border-radius: 16px;
   -fx-padding: 4px;
 }
 
@@ -564,12 +563,24 @@
 
 .create-menu-row:hover {
   -fx-background-color: rgba(214, 223, 236, 0.98);
-  -fx-background-radius: 5px;
+  -fx-background-radius: 0;
+}
+
+.create-menu-row-first:hover {
+  -fx-background-radius: 17px 17px 0 0;
 }
 
 .create-menu-row-last {
   -fx-border-width: 1 0 0 0;
   -fx-border-color: #eef2f7 transparent transparent transparent;
+}
+
+.create-menu-row-last:hover {
+  -fx-background-radius: 0 0 17px 17px;
+}
+
+.create-menu-row-first.create-menu-row-last:hover {
+  -fx-background-radius: 17px;
 }
 
 .ghost-icon-pill {
@@ -695,23 +706,21 @@
 
 .note-card {
   -fx-background-color: white;
-  -fx-background-radius: 5px;
+  -fx-background-radius: 18px;
   -fx-border-color: #e2e8f0;
-  -fx-border-radius: 5px;
-  -fx-border-width: 0.9px;
+  -fx-border-radius: 18px;
+  -fx-border-width: 1px;
   -fx-min-height: 112px;
 }
 
 .note-card:hover {
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 10, 0.16, 0, 2);
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 10, 0.12, 0, 4);
 }
 
 .note-card-selected {
   -fx-border-color: #fcba03;
-  -fx-border-width: 1.4px;
-  -fx-border-radius: 5px;
-  -fx-background-radius: 5px;
-  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.14), 12, 0.16, 0, 3);
+  -fx-border-width: 2px;
+  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.14), 16, 0.14, 0, 6);
 }
 
 .note-card-title,
@@ -942,11 +951,13 @@
 
 .note-toolbar-panel {
   -fx-background-color: rgba(255, 255, 255, 0.92);
-  -fx-border-color: transparent rgba(226, 232, 240, 0.86) transparent transparent;
-  -fx-border-width: 0 1 0 0;
+  -fx-border-color: transparent transparent transparent rgba(226, 232, 240, 0.86);
+  -fx-border-width: 0 0 0 1;
   -fx-background-radius: 0;
   -fx-border-radius: 0;
   -fx-effect: none;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
 }
 
 .note-toolbar-shell.note-toolbar-collapsed {
@@ -1123,31 +1134,38 @@
 }
 
 .note-sidebar-toggle-button {
-  -fx-background-color: rgba(255, 255, 255, 0.98);
-  -fx-border-color: rgba(15, 23, 42, 0.78);
-  -fx-border-width: 1px;
-  -fx-background-radius: 9px;
-  -fx-border-radius: 9px;
-  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.14), 10, 0.22, 0, 1);
+  -fx-background-color: rgba(255, 255, 255, 0.96);
+  -fx-border-color: rgba(148, 163, 184, 0.62) rgba(148, 163, 184, 0.62) rgba(148, 163, 184, 0.62) transparent;
+  -fx-border-width: 1px 1px 1px 0;
+  -fx-background-radius: 0 8px 8px 0;
+  -fx-border-radius: 0 8px 8px 0;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 6, 0.12, 0, 1);
   -fx-alignment: center;
   -fx-min-width: 24px;
   -fx-pref-width: 24px;
-  -fx-min-height: 26px;
-  -fx-pref-height: 26px;
+  -fx-min-height: 28px;
+  -fx-pref-height: 28px;
   -fx-max-width: 24px;
-  -fx-max-height: 26px;
+  -fx-max-height: 28px;
   -fx-padding: 0;
   -fx-cursor: hand;
   -fx-content-display: graphic-only;
 }
 
 .note-sidebar-toggle-button:hover {
-  -fx-background-color: #fffaf0;
+  -fx-background-color: rgba(255, 255, 255, 0.995);
+  -fx-border-color: rgba(100, 116, 139, 0.7) rgba(100, 116, 139, 0.7) rgba(100, 116, 139, 0.7) transparent;
 }
 
 .note-sidebar-toggle-icon {
   -fx-icon-color: #64748b;
   -fx-opacity: 1;
+}
+
+.note-sidebar-toggle-button:hover .note-sidebar-toggle-icon {
+  -fx-icon-color: #475569;
 }
 
 .note-title-field {
@@ -1197,8 +1215,9 @@
 }
 
 .help-dialog-card {
-    -fx-background-color: rgba(255, 255, 255, 0.985);
-  }
+  -fx-background-color: rgba(255, 255, 255, 0.985);
+  -fx-padding: 24px 24px 20px 24px;
+}
 
 .dialog-title {
   -fx-text-fill: #0f172a;
@@ -1244,7 +1263,7 @@
   -fx-border-color: transparent;
   -fx-background-radius: 10px;
   -fx-border-radius: 10px;
-  -fx-padding: 6px 8px;
+  -fx-padding: 10px 12px;
   -fx-content-display: graphic-only;
   -fx-alignment: center-left;
   -fx-cursor: hand;
@@ -1262,11 +1281,6 @@
   -fx-text-fill: #475569;
   -fx-font-size: 14px;
   -fx-font-weight: 500;
-}
-
-.help-close-button {
-  -fx-background-radius: 10px;
-  -fx-padding: 9px 14px;
 }
 
 .secondary-action-button {
@@ -1573,7 +1587,7 @@
 
 .theme-dark .note-toolbar-panel {
   -fx-background-color: rgba(15, 23, 42, 0.9);
-  -fx-border-color: transparent rgba(148, 163, 184, 0.2) transparent transparent;
+  -fx-border-color: transparent transparent transparent rgba(148, 163, 184, 0.2);
   -fx-effect: none;
 }
 
@@ -1623,13 +1637,22 @@
 }
 
 .theme-dark .note-sidebar-toggle-button {
-  -fx-background-color: rgba(15, 23, 42, 0.98);
-  -fx-border-color: rgba(203, 213, 225, 0.28);
-  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.32), 12, 0.28, 0, 2);
+  -fx-background-color: rgba(15, 23, 42, 0.96);
+  -fx-border-color: rgba(148, 163, 184, 0.34) rgba(148, 163, 184, 0.34) rgba(148, 163, 184, 0.34) transparent;
+  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.22), 8, 0.18, 0, 1);
+}
+
+.theme-dark .note-sidebar-toggle-button:hover {
+  -fx-background-color: rgba(30, 41, 59, 0.98);
+  -fx-border-color: rgba(203, 213, 225, 0.42) rgba(203, 213, 225, 0.42) rgba(203, 213, 225, 0.42) transparent;
 }
 
 .theme-dark .note-sidebar-toggle-icon {
   -fx-icon-color: #cbd5e1;
+}
+
+.theme-dark .note-sidebar-toggle-button:hover .note-sidebar-toggle-icon {
+  -fx-icon-color: #e2e8f0;
 }
 
 .theme-dark .title-bar-icon,

@@ -111,7 +111,7 @@ public class NoteCardController {
     expandedClip.widthProperty().bind(expandedContainer.widthProperty());
     expandedClip.heightProperty().bind(expandedContainer.maxHeightProperty());
     expandedContainer.setClip(expandedClip);
-    MotionSupport.installCardMotion(root);
+    MotionSupport.installCardMotion(root, expanded);
     MotionSupport.installButtonMotion(pinButton);
     MotionSupport.installButtonMotion(openWindowButton);
     MotionSupport.installButtonMotion(addChecklistItemButton);
@@ -150,11 +150,7 @@ public class NoteCardController {
       return;
     }
 
-    if (expanded.get()) {
-      store.setExpandedNoteId(null);
-    } else {
-      store.setExpandedNoteId(note.getId());
-    }
+    store.setExpandedNoteId(note.getId());
   }
 
   @FXML

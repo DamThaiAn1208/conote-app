@@ -7,6 +7,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 public final class ClientStoragePaths {
+  private static final String STORAGE_DIRECTORY_OVERRIDE_PROPERTY = "conote.storage.dir";
   private static final String APP_DIRECTORY_NAME = "CoNote";
   private static final String FALLBACK_DIRECTORY_NAME = ".conote";
   private static final String NOTE_CACHE_FILE_NAME = "noteCache.json";
@@ -49,6 +50,16 @@ public final class ClientStoragePaths {
     initialized = true;
   }
 
+  public static synchronized void resetForTesting() {
+    initialized = false;
+    appDir = null;
+    cacheDir = null;
+    pendingDir = null;
+    noteCacheFile = null;
+    uiStateFile = null;
+    syncQueueFile = null;
+  }
+
   public static Path appDir() {
     init();
     return appDir;
@@ -80,6 +91,15 @@ public final class ClientStoragePaths {
   }
 
   private static Path resolveAppDirectory() {
+    String storageOverride = System.getProperty(STORAGE_DIRECTORY_OVERRIDE_PROPERTY);
+    if (storageOverride != null && !storageOverride.isBlank()) {
+      try {
+        return Path.of(storageOverride);
+      } catch (InvalidPathException ignored) {
+        // Fall through to the default runtime locations below.
+      }
+    }
+
     String localAppData = System.getenv("LOCALAPPDATA");
     if (localAppData != null && !localAppData.isBlank()) {
       try {

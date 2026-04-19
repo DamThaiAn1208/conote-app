@@ -53,6 +53,7 @@
               pickOnBounds="true"
               spacing="12.0">
           <styleClass>
+            <String fx:value="create-menu-row-first" />
             <String fx:value="create-menu-row" />
           </styleClass>
           <children>

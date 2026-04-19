@@ -32,6 +32,12 @@ public class HelpDialogController {
   }
 
   @FXML
+  private void closeDialogFromMouse(MouseEvent event) {
+    event.consume();
+    close();
+  }
+
+  @FXML
   private void closeOnBackdrop(MouseEvent event) {
     if (event.getTarget() == event.getSource()) {
       close();

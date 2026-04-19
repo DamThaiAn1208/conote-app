@@ -17,6 +17,7 @@ import javafx.util.Duration;
 public class NoteToolbarController {
   static final double ROOT_WIDTH = 80.0;
   static final double HANDLE_WIDTH = 24.0;
+  static final double PANEL_WIDTH = ROOT_WIDTH - HANDLE_WIDTH;
   static final double COLLAPSED_ROOT_TRANSLATE = -(ROOT_WIDTH - HANDLE_WIDTH);
   static final double COLLAPSED_TOOL_TRANSLATE = -12.0;
   static final Duration SIDEBAR_ANIMATION_DURATION = Duration.millis(280);
@@ -63,9 +64,9 @@ public class NoteToolbarController {
     MotionSupport.installButtonMotion(italicToggle);
     MotionSupport.installButtonMotion(underlineToggle);
     MotionSupport.installButtonMotion(strikethroughToggle);
-    MotionSupport.installButtonMotion(sidebarToggleButton);
 
-    toolRailClip.widthProperty().bind(root.widthProperty());
+    sidebarToggleButton.setFocusTraversable(false);
+    toolRailClip.widthProperty().bind(toolRail.widthProperty());
     toolRailClip.heightProperty().bind(toolRail.heightProperty());
     toolRail.setClip(toolRailClip);
   }
@@ -166,7 +167,7 @@ public class NoteToolbarController {
 
   private void updateToggleIcon(boolean collapsed) {
     sidebarToggleIcon.setIconLiteral(
-        collapsed ? "codicon-chevron-right:16" : "codicon-chevron-left:16");
+        collapsed ? "codicon-chevron-right:14" : "codicon-chevron-left:14");
   }
 
   private void syncFormattingState(TextNoteEditorController.FormattingState formattingState) {
