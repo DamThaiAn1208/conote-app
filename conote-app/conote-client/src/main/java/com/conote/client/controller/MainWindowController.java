@@ -2,6 +2,7 @@ package com.conote.client.controller;
 
 import com.conote.client.app.ClientApplication;
 import com.conote.client.model.AppTheme;
+import com.conote.client.model.NoteColor;
 import com.conote.client.model.NoteModel;
 import com.conote.common.enums.NoteType;
 import com.conote.client.service.CoNoteStore;
@@ -9,14 +10,18 @@ import com.conote.client.util.LoadedView;
 import com.conote.client.util.ViewLoader;
 import java.util.HashMap;
 import java.util.Map;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
+import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.GaussianBlur;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
@@ -76,7 +81,8 @@ public class MainWindowController {
   private void initialize() {
     titleBarController.setContext(store, this);
     searchBarController.setContext(store, this::toggleFilters);
-    filterPanelController.setContext(store);
+    filterPanelController.setContext(store, this::refreshFilterButtonState);
+    refreshFilterButtonState();
     createNoteButtonController.setContext(store, this::openNoteWindow);
     noteListController.setContext(store, this);
     emptyStateController.setCreateAction(() -> {
@@ -98,13 +104,18 @@ public class MainWindowController {
     overlayClip.setArcWidth(10.0);
     overlayClip.setArcHeight(10.0);
     overlayLayer.setClip(overlayClip);
-    root.addEventHandler(MouseEvent.MOUSE_CLICKED, this::clearSelectedNoteOnOutsideClick);
+    root.setFocusTraversable(true);
+    root.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleMainWindowClick);
+    root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleMainWindowKeyPressed);
     applyTheme();
 
     ChangeListener<Object> refreshListener = (obs, oldValue, newValue) -> refreshStates();
     store.loadingProperty().addListener(refreshListener);
     store.getVisibleNotes().addListener((ListChangeListener<NoteModel>) change -> refreshStates());
     store.themeProperty().addListener((obs, oldValue, newValue) -> applyTheme());
+    store.sortModeProperty().addListener((obs, oldValue, newValue) -> refreshFilterButtonState());
+    store.getSelectedTags().addListener((SetChangeListener<String>) change -> refreshFilterButtonState());
+    store.getSelectedColors().addListener((SetChangeListener<NoteColor>) change -> refreshFilterButtonState());
 
     refreshStates();
   }
@@ -202,20 +213,38 @@ public class MainWindowController {
     return store;
   }
 
-  private void clearSelectedNoteOnOutsideClick(MouseEvent event) {
-    if (event.getButton() != MouseButton.PRIMARY || overlayLayer.isVisible()) {
+  private void handleMainWindowClick(MouseEvent event) {
+    Node node = resolveClickedNode(event);
+    if (event.getButton() != MouseButton.PRIMARY
+        || overlayLayer.isVisible()
+        || node == null) {
       return;
     }
 
-    if (event.getTarget() instanceof Node node && isInsideNoteCard(node)) {
+    dismissSearchAndFilters(node);
+
+    if (isInsideNoteCard(node)) {
       return;
     }
 
     store.setExpandedNoteId(null);
   }
 
+  private void handleMainWindowKeyPressed(KeyEvent event) {
+    if (event.getCode() != KeyCode.ESCAPE
+        || overlayLayer.isVisible()
+        || store.expandedNoteIdProperty().get() == null) {
+      return;
+    }
+
+    store.setExpandedNoteId(null);
+    event.consume();
+  }
+
   private void toggleFilters() {
-    filterPanelController.setExpanded(!filterPanelController.isExpanded());
+    boolean expanded = !filterPanelController.isExpanded();
+    filterPanelController.setExpanded(expanded);
+    refreshFilterButtonState();
   }
 
   private void refreshStates() {
@@ -251,6 +280,27 @@ public class MainWindowController {
     pane.setManaged(visible);
   }
 
+  private void refreshFilterButtonState() {
+    searchBarController.setFilterActive(filterPanelController.isExpanded() || store.hasActiveFilters());
+  }
+
+  private void dismissSearchAndFilters(Node node) {
+    if (!searchBarController.isInsideSearchArea(node)) {
+      Platform.runLater(() -> {
+        if (searchBarController.isSearchFocused()) {
+          root.requestFocus();
+        }
+      });
+    }
+
+    if (filterPanelController.isExpanded()
+        && !filterPanelController.containsNode(node)
+        && !searchBarController.isFilterButtonTarget(node)) {
+      filterPanelController.setExpanded(false);
+      refreshFilterButtonState();
+    }
+  }
+
   private boolean isInsideNoteCard(Node node) {
     Node current = node;
     while (current != null) {
@@ -260,6 +310,13 @@ public class MainWindowController {
       current = current.getParent();
     }
     return false;
+  }
+
+  private Node resolveClickedNode(MouseEvent event) {
+    if (event.getPickResult() != null && event.getPickResult().getIntersectedNode() != null) {
+      return event.getPickResult().getIntersectedNode();
+    }
+    return event.getTarget() instanceof Node node ? node : null;
   }
 
   private Stage currentStage() {

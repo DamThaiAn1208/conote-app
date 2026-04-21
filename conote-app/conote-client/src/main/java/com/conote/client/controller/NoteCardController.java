@@ -1,27 +1,34 @@
 package com.conote.client.controller;
 
+import com.conote.client.model.AppTheme;
 import com.conote.client.model.ChecklistItemModel;
 import com.conote.client.model.NoteColor;
 import com.conote.client.model.NoteModel;
 import com.conote.common.enums.NoteType;
 import com.conote.client.service.CoNoteStore;
 import com.conote.client.util.IconFactory;
-import com.conote.client.util.MotionSupport;
 import com.conote.client.util.LoadedView;
+import com.conote.client.util.MotionSupport;
+import com.conote.client.util.RichTextContentCodec;
+import com.conote.client.util.RichTextContentCodec.Segment;
+import com.conote.client.util.RichTextContentCodec.TextStyle;
 import com.conote.client.util.ViewLoader;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
-import javafx.beans.value.ObservableBooleanValue;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -31,22 +38,48 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 
 public class NoteCardController {
+  private static final String UNTITLED_NOTE_PLACEHOLDER = "Untitled note";
+  private static final String EMPTY_TEXT_NOTE_PLACEHOLDER = "Empty text note";
+  private static final int COLLAPSED_TEXT_PREVIEW_LINES = 3;
+  private static final int MIN_EXPANDED_TEXT_LINES = 3;
+  private static final int MAX_EXPANDED_TEXT_LINES = 12;
+  private static final double FALLBACK_TEXT_WIDTH = 220.0;
+  private static final String PREVIEW_TEXT_COLOR_LIGHT = "#64748b";
+  private static final String PREVIEW_TEXT_COLOR_DARK = "#cbd5e1";
+  private static final String EXPANDED_TEXT_COLOR_LIGHT = "#334155";
+  private static final String EXPANDED_TEXT_COLOR_DARK = "#f8fafc";
+  private static final String SOLID_PIN_PATH =
+      "M16 9V3H17V1H7V3H8V9C8 10.1 7.55 11.1 6.76 11.9L5 13.66V15H11V23H13V15H19V13.66L17.24 11.9C16.45 11.1 16 10.1 16 9Z";
   private static final DateTimeFormatter CARD_DATE =
       DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
   private static final String ACTION_FADE_KEY = "noteCard.actionFade";
-  private static final String SOLID_PIN_PATH =
-      "M16 9V3H17V1H7V3H8V9C8 10.1 7.55 11.1 6.76 11.9L5 13.66V15H11V23H13V15H19V13.66L17.24 11.9C16.45 11.1 16 10.1 16 9Z";
+
+  private enum RichTokenType {
+    WORD,
+    SPACE,
+    NEWLINE
+  }
+
+  private record StyledToken(String text, TextStyle style, RichTokenType type) {
+  }
 
   @FXML
   private VBox root;
@@ -59,6 +92,15 @@ public class NoteCardController {
 
   @FXML
   private Label previewLabel;
+
+  @FXML
+  private StackPane textContentStack;
+
+  @FXML
+  private TextFlow richPreviewFlow;
+
+  @FXML
+  private VBox richTextEditorBox;
 
   @FXML
   private VBox checklistPreviewBox;
@@ -102,6 +144,11 @@ public class NoteCardController {
   private CoNoteStore store;
   private MainWindowController mainController;
   private Timeline accordionTimeline;
+  private boolean syncingTitleField;
+  private boolean editingEmptyTitle;
+  private BooleanBinding pinButtonVisibleState;
+  private final Text textMeasure = new Text();
+  private TextNoteEditorController richTextEditorController;
 
   public void setContext(NoteModel note, CoNoteStore store, MainWindowController mainController) {
     this.note = note;
@@ -111,12 +158,24 @@ public class NoteCardController {
     expandedClip.widthProperty().bind(expandedContainer.widthProperty());
     expandedClip.heightProperty().bind(expandedContainer.maxHeightProperty());
     expandedContainer.setClip(expandedClip);
+    root.setFocusTraversable(true);
+    richPreviewFlow.setLineSpacing(0);
     MotionSupport.installCardMotion(root, expanded);
-    MotionSupport.installButtonMotion(pinButton);
-    MotionSupport.installButtonMotion(openWindowButton);
     MotionSupport.installButtonMotion(addChecklistItemButton);
+    titleField.setPromptText(UNTITLED_NOTE_PLACEHOLDER);
+    quickTextArea.setPromptText(EMPTY_TEXT_NOTE_PLACEHOLDER);
+    titleField.focusedProperty().addListener((obs, oldValue, newValue) -> {
+      if (!newValue && editingEmptyTitle && !hasUserTitle()) {
+        editingEmptyTitle = false;
+        applyExpandedVisualState();
+      }
+    });
 
-    titleField.textProperty().addListener((obs, oldValue, newValue) -> store.updateTitle(note, newValue));
+    titleField.textProperty().addListener((obs, oldValue, newValue) -> {
+      if (!syncingTitleField && titleField.isFocused()) {
+        store.updateTitle(note, newValue);
+      }
+    });
     quickTextArea.textProperty().addListener((obs, oldValue, newValue) -> {
       if (note.getType() == NoteType.TEXT && quickTextArea.isEditable()) {
         store.updatePlainTextContent(note, newValue);
@@ -125,7 +184,10 @@ public class NoteCardController {
     });
 
     store.expandedNoteIdProperty().addListener((obs, oldValue, newValue) -> syncExpandedState());
-    store.themeProperty().addListener((obs, oldValue, newValue) -> refreshSurface());
+    store.themeProperty().addListener((obs, oldValue, newValue) -> {
+      refreshSurface();
+      refreshPreview();
+    });
     note.titleProperty().addListener((obs, oldValue, newValue) -> updateTitle());
     note.contentProperty().addListener((obs, oldValue, newValue) -> handleContentChanged());
     note.typeProperty().addListener((obs, oldValue, newValue) -> refreshFromModel());
@@ -134,19 +196,33 @@ public class NoteCardController {
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> syncPinState());
     note.getTags().addListener((ListChangeListener<String>) change -> refreshTags());
     note.getChecklistItems().addListener((ListChangeListener<ChecklistItemModel>) this::handleChecklistItemsChanged);
+    textContentStack.widthProperty().addListener((obs, oldValue, newValue) -> refreshTextPresentation());
+    root.sceneProperty().addListener((obs, oldValue, newValue) -> {
+      if (newValue != null) {
+        Platform.runLater(this::refreshTextPresentation);
+        Platform.runLater(this::refreshInitialPinGraphic);
+      }
+    });
 
-    configureActionButton(pinButton, note.pinnedProperty().or(root.hoverProperty()));
+    pinButtonVisibleState = note.pinnedProperty().or(root.hoverProperty());
+    configureActionButton(pinButton, pinButtonVisibleState);
     configureActionButton(openWindowButton, root.hoverProperty());
 
     syncExpandedState();
     syncPinState();
     refreshFromModel();
+    Platform.runLater(this::refreshInitialPinGraphic);
   }
 
   @FXML
   private void handleCardClick(javafx.scene.input.MouseEvent event) {
-    Object target = event.getTarget();
-    if (target instanceof Button || target instanceof CheckBox || target instanceof TextInputControl) {
+    if (isInteractiveTarget(event.getTarget())) {
+      return;
+    }
+
+    if (expanded.get() && event.getTarget() == titleLabel && !hasUserTitle()) {
+      beginEditingEmptyTitle();
+      event.consume();
       return;
     }
 
@@ -172,24 +248,22 @@ public class NoteCardController {
   private void syncExpandedState() {
     boolean selected = note.getId().equals(store.expandedNoteIdProperty().get());
     expanded.set(selected);
-    titleLabel.setVisible(!selected);
-    titleLabel.setManaged(!selected);
-    titleField.setVisible(selected);
-    titleField.setManaged(selected);
-    refreshPreview();
+
     if (selected) {
-      refreshEditorVisibility();
+      applyExpandedVisualState();
+      if (note.getType() == NoteType.CHECKLIST) {
+        animateExpandedState(true);
+      } else {
+        resetCollapsedContainerState();
+      }
+    } else if (note.getType() == NoteType.CHECKLIST && isExpandedContainerOpen()) {
+      animateExpandedState(false);
+    } else {
+      applyCollapsedVisualState();
+      resetCollapsedContainerState();
     }
-    animateExpandedState(selected);
-    if (!selected) {
-      refreshEditorVisibility();
-    }
+
     focusExpandedEditor(selected);
-    if (selected && !root.getStyleClass().contains("note-card-selected")) {
-      root.getStyleClass().add("note-card-selected");
-    } else if (!selected) {
-      root.getStyleClass().remove("note-card-selected");
-    }
   }
 
   private void refreshFromModel() {
@@ -207,57 +281,70 @@ public class NoteCardController {
       renderChecklistRows();
     }
 
-    if (expanded.get()) {
+    if (expanded.get() && note.getType() == NoteType.CHECKLIST) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
   }
 
   private void refreshEditorVisibility() {
-    boolean textExpanded = note.getType() == NoteType.TEXT && expanded.get();
+    boolean isTextNote = note.getType() == NoteType.TEXT;
+    boolean richText = isTextNote && note.hasRichTextFormatting();
+    boolean showTextPreview = isTextNote && !expanded.get() && !richText;
+    boolean showRichPreview = isTextNote && !expanded.get() && richText;
+    boolean showRichEditor = isTextNote && expanded.get() && richText;
+    boolean textExpanded = note.getType() == NoteType.TEXT && expanded.get() && !richText;
+    boolean checklistCollapsed = note.getType() == NoteType.CHECKLIST && !expanded.get();
     boolean checklistExpanded = note.getType() == NoteType.CHECKLIST && expanded.get();
+    textContentStack.setVisible(isTextNote);
+    textContentStack.setManaged(isTextNote);
+    previewLabel.setVisible(showTextPreview);
+    previewLabel.setManaged(showTextPreview);
+    richPreviewFlow.setVisible(showRichPreview);
+    richPreviewFlow.setManaged(showRichPreview);
+    richTextEditorBox.setVisible(showRichEditor);
+    richTextEditorBox.setManaged(showRichEditor);
     textEditorBox.setVisible(textExpanded);
     textEditorBox.setManaged(textExpanded);
+    checklistPreviewBox.setVisible(checklistCollapsed);
+    checklistPreviewBox.setManaged(checklistCollapsed);
     checklistEditorBox.setVisible(checklistExpanded);
     checklistEditorBox.setManaged(checklistExpanded);
+    if (showRichEditor) {
+      ensureRichTextEditor();
+    }
+    if (richTextEditorController != null) {
+      richTextEditorController.setVisible(showRichEditor);
+    }
   }
 
   private void updateTitle() {
-    String title = note.getTitle() == null || note.getTitle().isBlank() ? "Untitled note" : note.getTitle();
+    String title = hasUserTitle() ? note.getTitle() : UNTITLED_NOTE_PLACEHOLDER;
     titleLabel.setText(title);
+    syncTitlePlaceholderStyle();
     if (!titleField.isFocused()) {
-      titleField.setText(note.getTitle());
+      syncTitleFieldFromModel();
     }
   }
 
   private void refreshPreview() {
     boolean isTextNote = note.getType() == NoteType.TEXT;
-    boolean showCollapsedPreview = !expanded.get();
-    previewLabel.setVisible(isTextNote && showCollapsedPreview);
-    previewLabel.setManaged(isTextNote && showCollapsedPreview);
-    checklistPreviewBox.setVisible(!isTextNote && showCollapsedPreview);
-    checklistPreviewBox.setManaged(!isTextNote && showCollapsedPreview);
 
     if (isTextNote) {
-      String preview = note.getPreviewText();
-      if (preview == null || preview.isBlank()) {
-        preview = "Empty text note";
-      }
-      previewLabel.setText(preview);
+      refreshTextPresentation();
       return;
     }
 
-    renderChecklistPreview();
+    if (!expanded.get()) {
+      renderChecklistPreview();
+    }
   }
 
   private void focusExpandedEditor(boolean selected) {
-    if (!selected || note.getType() != NoteType.TEXT) {
+    if (!selected || note.getType() != NoteType.TEXT || note.getPlainTextContent().isBlank()) {
       return;
     }
 
-    Platform.runLater(() -> {
-      quickTextArea.requestFocus();
-      quickTextArea.positionCaret(quickTextArea.getText().length());
-    });
+    Platform.runLater(root::requestFocus);
   }
 
   private void refreshDate() {
@@ -275,13 +362,16 @@ public class NoteCardController {
   }
 
   private void refreshSurface() {
-    NoteColor color = note.getColor() == null ? NoteColor.DEFAULT : note.getColor();
-    root.setStyle("-fx-background-color: " + color.surfaceForTheme(store.getTheme()) + ";");
+    String surfaceColor = surfaceColor();
+    root.setStyle("-fx-background-color: " + surfaceColor + ";");
+    if (richTextEditorController != null) {
+      richTextEditorController.updatePalette(surfaceColor, currentTheme());
+    }
   }
 
   private void syncPinState() {
     boolean pinned = note.isPinned();
-    pinButton.setGraphic(createPinGraphic(pinned));
+    ensurePinGraphic();
     if (pinned) {
       if (!pinButton.getStyleClass().contains("note-card-pin-active")) {
         pinButton.getStyleClass().add("note-card-pin-active");
@@ -313,6 +403,8 @@ public class NoteCardController {
       accordionTimeline.setOnFinished(event -> {
         expandedContainer.setVisible(false);
         expandedContainer.setManaged(false);
+        resetCollapsedContainerState();
+        applyCollapsedVisualState();
       });
     }
     accordionTimeline.play();
@@ -372,8 +464,14 @@ public class NoteCardController {
   }
 
   private void updateQuickTextHeight() {
-    int lines = Math.max(4, quickTextArea.getText().split("\\R", -1).length);
-    quickTextArea.setPrefRowCount(Math.min(10, lines + 1));
+    String text = quickTextArea.getText();
+    if (text == null || text.isBlank()) {
+      quickTextArea.setPrefRowCount(MIN_EXPANDED_TEXT_LINES);
+      return;
+    }
+
+    int lines = wrapTextToLines(text, availableTextContentWidth(), quickTextArea.getFont()).size();
+    quickTextArea.setPrefRowCount(Math.min(MAX_EXPANDED_TEXT_LINES, Math.max(MIN_EXPANDED_TEXT_LINES, lines)));
   }
 
   private void handleContentChanged() {
@@ -412,9 +510,357 @@ public class NoteCardController {
       quickTextArea.setText(plainText);
     }
     updateQuickTextHeight();
-    if (expanded.get()) {
+    if (expanded.get() && note.getType() == NoteType.CHECKLIST) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
+  }
+
+  private void refreshTextPresentation() {
+    if (note == null || note.getType() != NoteType.TEXT) {
+      return;
+    }
+
+    if (note.hasRichTextFormatting()) {
+      renderRichTextPresentation();
+      return;
+    }
+
+    richPreviewFlow.getChildren().clear();
+
+    String plainText = note.getPlainTextContent();
+    if (plainText == null || plainText.isBlank()) {
+      previewLabel.setText(EMPTY_TEXT_NOTE_PLACEHOLDER);
+      updateQuickTextHeight();
+      return;
+    }
+
+    List<String> wrappedLines = wrapTextToLines(plainText, availableTextContentWidth(), previewLabel.getFont());
+    previewLabel.setText(truncateWrappedLines(wrappedLines, COLLAPSED_TEXT_PREVIEW_LINES, previewLabel.getFont()));
+    updateQuickTextHeight();
+  }
+
+  private void renderRichTextPresentation() {
+    List<Segment> segments = RichTextContentCodec.decode(note.getContent());
+    if (segments.isEmpty()) {
+      richPreviewFlow.getChildren().clear();
+      previewLabel.setText(EMPTY_TEXT_NOTE_PLACEHOLDER);
+      return;
+    }
+
+    previewLabel.setText("");
+    populateTextFlow(
+        richPreviewFlow,
+        segmentsFromLines(truncateRichLines(
+            wrapStyledTokens(tokenizeRichSegments(segments), availableTextContentWidth(), previewLabel.getFont()),
+            availableTextContentWidth(),
+            previewLabel.getFont(),
+            COLLAPSED_TEXT_PREVIEW_LINES)),
+        previewTextColor());
+  }
+
+  private List<StyledToken> tokenizeRichSegments(List<Segment> segments) {
+    List<StyledToken> tokens = new ArrayList<>();
+    for (Segment segment : segments) {
+      if (segment == null || segment.text().isEmpty()) {
+        continue;
+      }
+
+      StringBuilder builder = new StringBuilder();
+      RichTokenType currentType = null;
+      for (int index = 0; index < segment.text().length(); index++) {
+        char currentChar = segment.text().charAt(index);
+        if (currentChar == '\r') {
+          continue;
+        }
+
+        RichTokenType nextType;
+        char normalizedChar = currentChar;
+        if (currentChar == '\n') {
+          nextType = RichTokenType.NEWLINE;
+        } else if (Character.isWhitespace(currentChar)) {
+          nextType = RichTokenType.SPACE;
+          normalizedChar = ' ';
+        } else {
+          nextType = RichTokenType.WORD;
+        }
+
+        if (nextType == RichTokenType.NEWLINE) {
+          flushStyledToken(tokens, builder, segment.style(), currentType);
+          tokens.add(new StyledToken("\n", segment.style(), RichTokenType.NEWLINE));
+          currentType = null;
+          continue;
+        }
+
+        if (currentType != nextType) {
+          flushStyledToken(tokens, builder, segment.style(), currentType);
+          currentType = nextType;
+        }
+        builder.append(normalizedChar);
+      }
+      flushStyledToken(tokens, builder, segment.style(), currentType);
+    }
+    return tokens;
+  }
+
+  private void flushStyledToken(List<StyledToken> tokens, StringBuilder builder, TextStyle style, RichTokenType type) {
+    if (type == null || builder.isEmpty()) {
+      builder.setLength(0);
+      return;
+    }
+    tokens.add(new StyledToken(builder.toString(), style, type));
+    builder.setLength(0);
+  }
+
+  private List<List<StyledToken>> wrapStyledTokens(List<StyledToken> tokens, double maxWidth, Font baseFont) {
+    List<List<StyledToken>> lines = new ArrayList<>();
+    List<StyledToken> currentLine = new ArrayList<>();
+    double currentWidth = 0.0;
+
+    for (StyledToken token : tokens) {
+      if (token.type() == RichTokenType.NEWLINE) {
+        trimTrailingWhitespace(currentLine);
+        lines.add(copyTokens(currentLine));
+        currentLine.clear();
+        currentWidth = 0.0;
+        continue;
+      }
+
+      if (token.type() == RichTokenType.SPACE) {
+        if (currentLine.isEmpty()) {
+          continue;
+        }
+
+        double tokenWidth = measureStyledText(token.text(), token.style(), baseFont);
+        if (currentWidth + tokenWidth <= maxWidth) {
+          currentLine.add(token);
+          currentWidth += tokenWidth;
+        } else {
+          trimTrailingWhitespace(currentLine);
+          lines.add(copyTokens(currentLine));
+          currentLine.clear();
+          currentWidth = 0.0;
+        }
+        continue;
+      }
+
+      String remaining = token.text();
+      while (!remaining.isEmpty()) {
+        double tokenWidth = measureStyledText(remaining, token.style(), baseFont);
+        if (currentLine.isEmpty() && tokenWidth <= maxWidth) {
+          currentLine.add(new StyledToken(remaining, token.style(), RichTokenType.WORD));
+          currentWidth += tokenWidth;
+          remaining = "";
+        } else if (!currentLine.isEmpty() && currentWidth + tokenWidth <= maxWidth) {
+          currentLine.add(new StyledToken(remaining, token.style(), RichTokenType.WORD));
+          currentWidth += tokenWidth;
+          remaining = "";
+        } else if (!currentLine.isEmpty()) {
+          trimTrailingWhitespace(currentLine);
+          lines.add(copyTokens(currentLine));
+          currentLine.clear();
+          currentWidth = 0.0;
+        } else {
+          int splitIndex = longestFittingPrefix(remaining, token.style(), maxWidth, baseFont);
+          if (splitIndex <= 0) {
+            splitIndex = 1;
+          }
+
+          String fitting = remaining.substring(0, splitIndex);
+          currentLine.add(new StyledToken(fitting, token.style(), RichTokenType.WORD));
+          trimTrailingWhitespace(currentLine);
+          lines.add(copyTokens(currentLine));
+          currentLine.clear();
+          currentWidth = 0.0;
+          remaining = remaining.substring(splitIndex);
+        }
+      }
+    }
+
+    trimTrailingWhitespace(currentLine);
+    if (!currentLine.isEmpty() || lines.isEmpty()) {
+      lines.add(copyTokens(currentLine));
+    }
+    return lines;
+  }
+
+  private List<List<StyledToken>> truncateRichLines(
+      List<List<StyledToken>> lines,
+      double maxWidth,
+      Font baseFont,
+      int maxLines) {
+    if (lines.size() <= maxLines) {
+      return lines;
+    }
+
+    List<List<StyledToken>> previewLines = new ArrayList<>();
+    for (int index = 0; index < maxLines; index++) {
+      previewLines.add(copyTokens(lines.get(index)));
+    }
+
+    List<StyledToken> lastLine = previewLines.get(maxLines - 1);
+    trimTrailingWhitespace(lastLine);
+    TextStyle ellipsisStyle = lastVisibleStyle(lastLine);
+    double ellipsisWidth = measureStyledText("...", ellipsisStyle, baseFont);
+
+    while (!lastLine.isEmpty() && measureTokensWidth(lastLine, baseFont) + ellipsisWidth > maxWidth) {
+      shrinkLastToken(lastLine);
+      trimTrailingWhitespace(lastLine);
+    }
+
+    lastLine.add(new StyledToken("...", ellipsisStyle, RichTokenType.WORD));
+    return previewLines;
+  }
+
+  private void shrinkLastToken(List<StyledToken> tokens) {
+    if (tokens.isEmpty()) {
+      return;
+    }
+
+    StyledToken lastToken = tokens.get(tokens.size() - 1);
+    if (lastToken.text().length() <= 1) {
+      tokens.remove(tokens.size() - 1);
+      return;
+    }
+
+    tokens.set(
+        tokens.size() - 1,
+        new StyledToken(
+            lastToken.text().substring(0, lastToken.text().length() - 1),
+            lastToken.style(),
+            lastToken.type()));
+  }
+
+  private TextStyle lastVisibleStyle(List<StyledToken> tokens) {
+    for (int index = tokens.size() - 1; index >= 0; index--) {
+      StyledToken token = tokens.get(index);
+      if (!token.text().isBlank()) {
+        return token.style();
+      }
+    }
+    return TextStyle.PLAIN;
+  }
+
+  private void trimTrailingWhitespace(List<StyledToken> tokens) {
+    while (!tokens.isEmpty() && tokens.get(tokens.size() - 1).type() == RichTokenType.SPACE) {
+      tokens.remove(tokens.size() - 1);
+    }
+  }
+
+  private List<StyledToken> copyTokens(List<StyledToken> tokens) {
+    return new ArrayList<>(tokens);
+  }
+
+  private int longestFittingPrefix(String value, TextStyle style, double maxWidth, Font baseFont) {
+    int splitIndex = 0;
+    for (int index = 1; index <= value.length(); index++) {
+      if (measureStyledText(value.substring(0, index), style, baseFont) <= maxWidth) {
+        splitIndex = index;
+      } else {
+        break;
+      }
+    }
+    return splitIndex;
+  }
+
+  private double measureTokensWidth(List<StyledToken> tokens, Font baseFont) {
+    double width = 0.0;
+    for (StyledToken token : tokens) {
+      width += measureStyledText(token.text(), token.style(), baseFont);
+    }
+    return width;
+  }
+
+  private List<Segment> segmentsFromLines(List<List<StyledToken>> lines) {
+    List<Segment> segments = new ArrayList<>();
+    for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+      for (StyledToken token : lines.get(lineIndex)) {
+        appendSegment(segments, token.text(), token.style());
+      }
+      if (lineIndex < lines.size() - 1) {
+        appendSegment(segments, "\n", TextStyle.PLAIN);
+      }
+    }
+    return segments;
+  }
+
+  private void appendSegment(List<Segment> segments, String text, TextStyle style) {
+    if (text == null || text.isEmpty()) {
+      return;
+    }
+
+    if (!segments.isEmpty()) {
+      Segment previous = segments.get(segments.size() - 1);
+      if (previous.style().equals(style)) {
+        segments.set(segments.size() - 1, new Segment(previous.text() + text, style));
+        return;
+      }
+    }
+
+    segments.add(new Segment(text, style));
+  }
+
+  private void populateTextFlow(TextFlow flow, List<Segment> segments, Color fill) {
+    flow.getChildren().clear();
+    Font baseFont = previewLabel.getFont();
+    for (Segment segment : segments) {
+      if (segment == null || segment.text().isEmpty()) {
+        continue;
+      }
+
+      Text textNode = new Text(segment.text());
+      textNode.setFont(fontForStyle(segment.style(), baseFont));
+      textNode.setUnderline(segment.style().underline());
+      textNode.setStrikethrough(segment.style().strikethrough());
+      textNode.setFill(fill);
+      flow.getChildren().add(textNode);
+    }
+  }
+
+  private Color previewTextColor() {
+    return currentTheme() == AppTheme.DARK
+        ? Color.web(PREVIEW_TEXT_COLOR_DARK)
+        : Color.web(PREVIEW_TEXT_COLOR_LIGHT);
+  }
+
+  private Color expandedTextColor() {
+    return currentTheme() == AppTheme.DARK
+        ? Color.web(EXPANDED_TEXT_COLOR_DARK)
+        : Color.web(EXPANDED_TEXT_COLOR_LIGHT);
+  }
+
+  private AppTheme currentTheme() {
+    return store == null || store.getTheme() == null ? AppTheme.LIGHT : store.getTheme();
+  }
+
+  private String surfaceColor() {
+    NoteColor color = note.getColor() == null ? NoteColor.DEFAULT : note.getColor();
+    return color.surfaceForTheme(currentTheme());
+  }
+
+  private double measureStyledText(String value, TextStyle style, Font baseFont) {
+    textMeasure.setFont(fontForStyle(style, baseFont));
+    textMeasure.setText(value);
+    return textMeasure.getLayoutBounds().getWidth();
+  }
+
+  private void ensureRichTextEditor() {
+    if (richTextEditorController != null) {
+      return;
+    }
+
+    LoadedView<TextNoteEditorController> view = ViewLoader.load("/fxml/note/TextNoteEditor.fxml");
+    richTextEditorController = view.controller();
+    richTextEditorController.setContext(note, store);
+    richTextEditorController.updatePalette(surfaceColor(), currentTheme());
+    richTextEditorBox.getChildren().setAll(view.root());
+  }
+
+  private Font fontForStyle(TextStyle style, Font baseFont) {
+    TextStyle safeStyle = style == null ? TextStyle.PLAIN : style;
+    Font sourceFont = baseFont == null ? Font.getDefault() : baseFont;
+    FontWeight weight = safeStyle.bold() ? FontWeight.BOLD : FontWeight.NORMAL;
+    FontPosture posture = safeStyle.italic() ? FontPosture.ITALIC : FontPosture.REGULAR;
+    return Font.font(sourceFont.getFamily(), weight, posture, sourceFont.getSize());
   }
 
   private void syncQuickTextMode() {
@@ -470,6 +916,7 @@ public class NoteCardController {
     button.setManaged(true);
     button.setFocusTraversable(false);
     button.setPickOnBounds(true);
+    configureActionGraphic(button);
     button.setOpacity(visibleState.get() ? 1.0 : 0.0);
     button.setMouseTransparent(!visibleState.get());
     visibleState.addListener((obs, oldValue, newValue) -> animateActionButton(button, newValue));
@@ -500,16 +947,236 @@ public class NoteCardController {
     return value instanceof FadeTransition fade ? fade : null;
   }
 
-  private Node createPinGraphic(boolean pinned) {
-    if (!pinned) {
-      return IconFactory.icon("codicon-pinned", 15, "card-action-icon", "pinned-icon");
+  private void configureActionGraphic(Button button) {
+    Node graphic = button.getGraphic();
+    if (graphic == null) {
+      return;
     }
 
+    graphic.setPickOnBounds(true);
+    graphic.setOnMousePressed(MouseEvent::consume);
+    graphic.setOnMouseReleased(event -> handleGraphicRelease(button, event));
+  }
+
+  private void handleGraphicRelease(Button button, MouseEvent event) {
+    if (!button.isDisabled() && !button.isMouseTransparent()) {
+      button.fire();
+    }
+    event.consume();
+  }
+
+  private boolean isInteractiveTarget(Object target) {
+    if (!(target instanceof Node node)) {
+      return false;
+    }
+
+    Node current = node;
+    while (current != null) {
+      if (current instanceof Button || current instanceof CheckBox || current instanceof TextInputControl) {
+        return true;
+      }
+      current = current.getParent();
+    }
+    return false;
+  }
+
+  private void ensurePinGraphic() {
+    pinButton.setGraphic(note.isPinned()
+        ? createSolidPinGraphic()
+        : IconFactory.icon("codicon-pinned", 16, "card-action-icon", "pinned-icon"));
+    configureActionGraphic(pinButton);
+  }
+
+  private void refreshInitialPinGraphic() {
+    ensurePinGraphic();
+    pinButton.applyCss();
+    pinButton.layout();
+  }
+
+  private void applyExpandedVisualState() {
+    boolean showTitleField = hasUserTitle() || editingEmptyTitle;
+    titleLabel.setVisible(!showTitleField);
+    titleLabel.setManaged(!showTitleField);
+    titleField.setVisible(showTitleField);
+    titleField.setManaged(showTitleField);
+    Platform.runLater(this::syncTitleFieldIfEditable);
+    refreshPreview();
+    refreshEditorVisibility();
+    if (!root.getStyleClass().contains("note-card-selected")) {
+      root.getStyleClass().add("note-card-selected");
+    }
+  }
+
+  private void applyCollapsedVisualState() {
+    editingEmptyTitle = false;
+    titleLabel.setVisible(true);
+    titleLabel.setManaged(true);
+    titleField.setVisible(false);
+    titleField.setManaged(false);
+    refreshPreview();
+    refreshEditorVisibility();
+    root.getStyleClass().remove("note-card-selected");
+  }
+
+  private boolean isExpandedContainerOpen() {
+    return expandedContainer.isVisible()
+        || expandedContainer.isManaged()
+        || expandedContainer.getMaxHeight() > 0.0
+        || expandedContainer.getOpacity() > 0.0;
+  }
+
+  private void resetCollapsedContainerState() {
+    expandedContainer.setVisible(false);
+    expandedContainer.setManaged(false);
+    expandedContainer.setMaxHeight(0.0);
+    expandedContainer.setOpacity(0.0);
+    expandedContainer.setTranslateY(-6.0);
+  }
+
+  private void syncTitleFieldFromModel() {
+    syncingTitleField = true;
+    titleField.setText(note.getTitle() == null ? "" : note.getTitle());
+    syncingTitleField = false;
+  }
+
+  private void syncTitleFieldIfEditable() {
+    if (expanded.get() && !titleField.isFocused()) {
+      syncTitleFieldFromModel();
+    }
+  }
+
+  private double availableTextContentWidth() {
+    double width = textContentStack.getWidth();
+    if (width <= 0) {
+      width = previewLabel.getWidth();
+    }
+    if (width <= 0) {
+      width = quickTextArea.getWidth();
+    }
+    return Math.max(FALLBACK_TEXT_WIDTH, width);
+  }
+
+  private List<String> wrapTextToLines(String value, double maxWidth, Font font) {
+    List<String> lines = new ArrayList<>();
+    if (value == null || value.isBlank()) {
+      return lines;
+    }
+
+    String[] paragraphs = value.replace("\t", " ").split("\\R", -1);
+    for (String paragraph : paragraphs) {
+      if (paragraph.isBlank()) {
+        lines.add("");
+        continue;
+      }
+
+      String currentLine = "";
+      for (String word : paragraph.trim().split("\\s+")) {
+        currentLine = appendWord(lines, currentLine, word, maxWidth, font);
+      }
+
+      if (!currentLine.isEmpty()) {
+        lines.add(currentLine);
+      }
+    }
+
+    return lines;
+  }
+
+  private String appendWord(List<String> lines, String currentLine, String word, double maxWidth, Font font) {
+    if (currentLine.isEmpty()) {
+      if (fitsWithinWidth(word, maxWidth, font)) {
+        return word;
+      }
+      return splitOversizedWord(lines, word, maxWidth, font);
+    }
+
+    String candidate = currentLine + " " + word;
+    if (fitsWithinWidth(candidate, maxWidth, font)) {
+      return candidate;
+    }
+
+    lines.add(currentLine);
+    if (fitsWithinWidth(word, maxWidth, font)) {
+      return word;
+    }
+    return splitOversizedWord(lines, word, maxWidth, font);
+  }
+
+  private String splitOversizedWord(List<String> lines, String word, double maxWidth, Font font) {
+    String remaining = word;
+    while (!remaining.isEmpty()) {
+      int splitIndex = 1;
+      while (splitIndex < remaining.length()
+          && fitsWithinWidth(remaining.substring(0, splitIndex + 1), maxWidth, font)) {
+        splitIndex++;
+      }
+
+      if (splitIndex >= remaining.length()) {
+        return remaining;
+      }
+
+      lines.add(remaining.substring(0, splitIndex));
+      remaining = remaining.substring(splitIndex);
+    }
+    return "";
+  }
+
+  private String truncateWrappedLines(List<String> wrappedLines, int maxLines, Font font) {
+    if (wrappedLines.isEmpty()) {
+      return EMPTY_TEXT_NOTE_PLACEHOLDER;
+    }
+
+    if (wrappedLines.size() <= maxLines) {
+      return String.join("\n", wrappedLines);
+    }
+
+    List<String> previewLines = new ArrayList<>(wrappedLines.subList(0, maxLines));
+    String lastLine = previewLines.get(maxLines - 1).stripTrailing();
+    if (lastLine.isEmpty()) {
+      previewLines.set(maxLines - 1, "...");
+      return String.join("\n", previewLines);
+    }
+
+    while (!lastLine.isEmpty() && !fitsWithinWidth(lastLine + "...", availableTextContentWidth(), font)) {
+      lastLine = lastLine.substring(0, lastLine.length() - 1).stripTrailing();
+    }
+
+    previewLines.set(maxLines - 1, lastLine.isEmpty() ? "..." : lastLine + "...");
+    return String.join("\n", previewLines);
+  }
+
+  private boolean fitsWithinWidth(String value, double maxWidth, Font font) {
+    textMeasure.setFont(font == null ? Font.getDefault() : font);
+    textMeasure.setText(value);
+    return textMeasure.getLayoutBounds().getWidth() <= maxWidth;
+  }
+
+  private SVGPath createSolidPinGraphic() {
     SVGPath icon = new SVGPath();
     icon.setContent(SOLID_PIN_PATH);
     icon.setScaleX(0.56);
     icon.setScaleY(0.56);
-    icon.getStyleClass().addAll("card-action-icon", "solid-pin-icon");
+    icon.getStyleClass().add("solid-pin-icon");
     return icon;
+  }
+
+  private void syncTitlePlaceholderStyle() {
+    titleLabel.getStyleClass().remove("note-card-title-placeholder");
+    if (!hasUserTitle()) {
+      titleLabel.getStyleClass().add("note-card-title-placeholder");
+    }
+  }
+
+  private boolean hasUserTitle() {
+    return note.getTitle() != null && !note.getTitle().isBlank();
+  }
+
+  private void beginEditingEmptyTitle() {
+    editingEmptyTitle = true;
+    applyExpandedVisualState();
+    Platform.runLater(() -> {
+      titleField.requestFocus();
+      titleField.positionCaret(titleField.getText().length());
+    });
   }
 }

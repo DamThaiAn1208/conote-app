@@ -12,7 +12,7 @@
       alignment="CENTER_LEFT"
       spacing="10.0">
   <children>
-    <HBox alignment="CENTER_LEFT" spacing="8.0" styleClass="search-shell" HBox.hgrow="ALWAYS">
+    <HBox fx:id="searchShell" alignment="CENTER_LEFT" spacing="8.0" styleClass="search-shell" HBox.hgrow="ALWAYS">
       <children>
         <FontIcon iconLiteral="codicon-search:16" styleClass="search-icon" />
         <TextField fx:id="searchField" promptText="Search notes..." styleClass="search-field" HBox.hgrow="ALWAYS" />
@@ -20,7 +20,7 @@
     </HBox>
     <Button fx:id="filterButton" mnemonicParsing="false" onAction="#toggleFilters" styleClass="filter-toggle-button">
       <graphic>
-        <FontIcon iconLiteral="codicon-filter:17" styleClass="filter-icon" />
+        <FontIcon fx:id="filterIcon" iconLiteral="codicon-filter:17" styleClass="filter-icon" />
       </graphic>
     </Button>
   </children>
