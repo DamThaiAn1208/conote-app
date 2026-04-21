@@ -4,6 +4,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.SVGPath?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <HBox fx:controller="com.conote.client.controller.SearchBarController"
@@ -20,7 +22,13 @@
     </HBox>
     <Button fx:id="filterButton" mnemonicParsing="false" onAction="#toggleFilters" styleClass="filter-toggle-button">
       <graphic>
-        <FontIcon fx:id="filterIcon" iconLiteral="codicon-filter:17" styleClass="filter-icon" />
+        <StackPane styleClass="filter-icon-shell">
+          <children>
+            <SVGPath fx:id="filterIcon"
+                     content="M2.35 3.15 H13.65 C14.08 3.15 14.31 3.67 14.03 3.99 L9.55 8.92 V12.48 C9.55 12.81 9.37 13.1 9.07 13.25 L6.89 14.42 C6.32 14.72 5.65 14.31 5.65 13.66 V8.92 L1.97 3.99 C1.69 3.67 1.92 3.15 2.35 3.15 Z"
+                     styleClass="filter-icon-glyph" />
+          </children>
+        </StackPane>
       </graphic>
     </Button>
   </children>

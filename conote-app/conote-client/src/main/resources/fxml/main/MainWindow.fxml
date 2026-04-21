@@ -2,6 +2,7 @@
 
 <?import java.lang.String?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -28,23 +29,27 @@
                 <fx:include fx:id="searchBar" source="SearchBar.fxml" />
                 <fx:include fx:id="filterPanel" source="FilterPanel.fxml" />
                 <fx:include fx:id="createNoteButton" source="CreateNoteButton.fxml" />
-                <StackPane VBox.vgrow="ALWAYS">
+                <Region maxWidth="Infinity" minHeight="1.0" prefHeight="1.0" styleClass="main-window-section-divider">
+                  <VBox.margin>
+                    <Insets bottom="-4.0" left="-16.0" right="-16.0" top="-2.0" />
+                  </VBox.margin>
+                </Region>
+                <StackPane maxHeight="Infinity" maxWidth="Infinity" minHeight="0.0" prefHeight="0.0" VBox.vgrow="ALWAYS">
                   <styleClass>
-                    <String fx:value="surface-shell" />
-                    <String fx:value="note-list-surface" />
+                    <String fx:value="note-list-host" />
                   </styleClass>
                   <children>
-                    <StackPane fx:id="loadingStatePane">
+                    <StackPane fx:id="loadingStatePane" maxHeight="Infinity" maxWidth="Infinity" minHeight="0.0" prefHeight="0.0">
                       <children>
                         <fx:include source="../shared/LoadingSkeleton.fxml" />
                       </children>
                     </StackPane>
-                    <StackPane fx:id="emptyStatePane">
+                    <StackPane fx:id="emptyStatePane" maxHeight="Infinity" maxWidth="Infinity" minHeight="0.0" prefHeight="0.0">
                       <children>
                         <fx:include fx:id="emptyState" source="../shared/EmptyState.fxml" />
                       </children>
                     </StackPane>
-                    <StackPane fx:id="listStatePane">
+                    <StackPane fx:id="listStatePane" maxHeight="Infinity" maxWidth="Infinity" minHeight="0.0" prefHeight="0.0">
                       <children>
                         <fx:include fx:id="noteList" source="NoteList.fxml" />
                       </children>

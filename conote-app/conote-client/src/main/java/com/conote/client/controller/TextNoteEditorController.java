@@ -168,6 +168,15 @@ public class TextNoteEditorController {
     applyEditorAppearance();
   }
 
+  public void scrollToStart() {
+    if (editorArea == null) {
+      return;
+    }
+
+    editorArea.selectRange(0, 0);
+    editorArea.requestFollowCaret();
+  }
+
   private void syncFromModel(String content) {
     String nextValue = content == null ? "" : content;
     if (syncingFromModel || editorFocused || contentDirty || Objects.equals(latestSerializedContent, nextValue)) {
