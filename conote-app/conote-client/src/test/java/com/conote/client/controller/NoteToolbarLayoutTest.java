@@ -74,13 +74,10 @@ class NoteToolbarLayoutTest {
     });
     WaitForAsyncUtils.waitForFxEvents();
 
-    Bounds railBounds = toolRail.localToScene(toolRail.getBoundsInLocal());
-    Bounds buttonBounds = sidebarToggleButton.localToScene(sidebarToggleButton.getBoundsInLocal());
-    Bounds rootBounds = root.localToScene(root.getBoundsInLocal());
-
-    assertEquals(railBounds.getMaxX(), buttonBounds.getMinX(), 0.75,
+    assertEquals(NoteToolbarController.PANEL_WIDTH, sidebarToggleButton.getLayoutX(), 0.01,
         "The toggle tab should start exactly at the outer edge of the toolbar rail");
-    assertEquals(rootBounds.getMaxX(), buttonBounds.getMaxX(), 0.75,
+    assertEquals(NoteToolbarController.ROOT_WIDTH,
+        sidebarToggleButton.getLayoutX() + sidebarToggleButton.getWidth(), 0.01,
         "The toggle tab should remain fully outside the rail and flush with the shell edge");
   }
 
@@ -135,6 +132,23 @@ class NoteToolbarLayoutTest {
         "The arrow icon should stay vertically centered inside the tab");
     assertTrue(sidebarToggleIcon.getIconLiteral().contains("chevron-left"),
         "Open state should keep the expected directional icon");
+  }
+
+  @Test
+  void toggleButtonKeepsCompactVerticalProportion(FxRobot robot) {
+    robot.interact(() -> {
+      controller.applyCollapsedState(false);
+      root.applyCss();
+      root.layout();
+    });
+    WaitForAsyncUtils.waitForFxEvents();
+
+    assertEquals(22.0, sidebarToggleButton.getWidth(), 0.01,
+        "The toggle tab should tighten its width around the centered icon");
+    assertEquals(30.0, sidebarToggleButton.getHeight(), 0.01,
+        "The toggle tab should read as a subtle vertical rectangle");
+    assertTrue(sidebarToggleButton.getHeight() > sidebarToggleButton.getWidth(),
+        "The toggle tab should be slightly taller than it is wide");
   }
 
   private double openAndMeasureButtonLayoutX(FxRobot robot) {

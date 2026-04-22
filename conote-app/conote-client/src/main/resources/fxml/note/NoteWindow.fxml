@@ -81,9 +81,9 @@
                       VBox.vgrow="ALWAYS">
                   <children>
                     <AnchorPane fx:id="noteSidebarSpace"
-                                maxWidth="24.0"
-                                minWidth="24.0"
-                                prefWidth="24.0">
+                                maxWidth="22.0"
+                                minWidth="22.0"
+                                prefWidth="22.0">
                       <children>
                         <fx:include fx:id="noteToolbar"
                                     source="NoteToolbar.fxml"
