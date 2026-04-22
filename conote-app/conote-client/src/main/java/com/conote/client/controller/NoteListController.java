@@ -47,6 +47,13 @@ public class NoteListController {
     render();
   }
 
+  public Parent findNoteCard(String noteId) {
+    if (noteId == null || noteId.isBlank()) {
+      return null;
+    }
+    return noteCardsById.get(noteId);
+  }
+
   private void configureStableListWidth() {
     if (noteListHost == null || noteListScroll == null || listRoot == null) {
       return;

@@ -18,9 +18,12 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
@@ -101,6 +104,8 @@ public class TextNoteEditorController {
   private AppTheme theme = AppTheme.LIGHT;
   private Consumer<FormattingState> formattingStateListener = state -> {
   };
+  private Consumer<Boolean> tabTraversalHandler = backward -> {
+  };
 
   @FXML
   private void initialize() {
@@ -144,6 +149,22 @@ public class TextNoteEditorController {
     this.formattingStateListener = formattingStateListener == null ? state -> {
     } : formattingStateListener;
     publishCurrentFormattingState();
+  }
+
+  public void setTabTraversalHandler(Consumer<Boolean> tabTraversalHandler) {
+    this.tabTraversalHandler = tabTraversalHandler == null ? backward -> {
+    } : tabTraversalHandler;
+  }
+
+  public Node focusTarget() {
+    return editorArea;
+  }
+
+  public void requestEditorFocus() {
+    if (editorArea == null) {
+      return;
+    }
+    editorArea.requestFocus();
   }
 
   public void setBoldSelected(boolean selected) {
@@ -230,10 +251,13 @@ public class TextNoteEditorController {
     editorArea = new InlineCssTextArea();
     editorArea.setWrapText(true);
     editorArea.setEditable(true);
+    editorArea.setFocusTraversable(true);
     editorArea.setUseInitialStyleForInsertion(true);
     editorArea.setPadding(Insets.EMPTY);
     editorArea.setCursor(Cursor.TEXT);
     editorArea.getStyleClass().add("text-note-editor-area");
+    editorArea.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabKeyPressed);
+    editorArea.addEventFilter(KeyEvent.KEY_TYPED, this::consumeTabCharacterInsertion);
     editorArea.textProperty().addListener((obs, oldValue, newValue) -> updatePromptVisibility());
     editorArea.richChanges().subscribe(change -> handleEditorMutation());
     editorArea.focusedProperty().addListener((obs, oldValue, newValue) -> {
@@ -255,6 +279,22 @@ public class TextNoteEditorController {
     editorContainer.getChildren().add(0, editorScrollPane);
     applyEditorAppearance();
     updatePromptVisibility();
+  }
+
+  private void handleTabKeyPressed(KeyEvent event) {
+    if (event.getCode() != KeyCode.TAB) {
+      return;
+    }
+
+    tabTraversalHandler.accept(event.isShiftDown());
+    event.consume();
+  }
+
+  private void consumeTabCharacterInsertion(KeyEvent event) {
+    String character = event.getCharacter();
+    if (character != null && character.contains("\t")) {
+      event.consume();
+    }
   }
 
   private void handleEditorMutation() {

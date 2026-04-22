@@ -24,21 +24,25 @@ import javafx.application.Platform;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -75,6 +79,8 @@ public class NoteCardController {
       DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
   private static final String ACTION_FADE_KEY = "noteCard.actionFade";
   private static final Duration TEXT_SWAP_DURATION = Duration.millis(120);
+  private static final Duration QUICK_TEXT_COMMIT_DELAY = Duration.millis(180);
+  private static final Duration QUICK_TEXT_LAYOUT_DELAY = Duration.millis(70);
   private static final double TEXT_SWAP_OFFSET = 2.5;
   private static final double TEXT_EDITOR_ALIGNMENT_OFFSET = -2.0;
 
@@ -85,6 +91,16 @@ public class NoteCardController {
   }
 
   private record StyledToken(String text, TextStyle style, RichTokenType type) {
+  }
+
+  private enum ChecklistFocusRole {
+    CHECKBOX,
+    TEXT_FIELD,
+    REMOVE_BUTTON,
+    ADD_BUTTON
+  }
+
+  private record ChecklistFocusTarget(ChecklistItemModel item, ChecklistFocusRole role, int index) {
   }
 
   @FXML
@@ -152,10 +168,33 @@ public class NoteCardController {
   private Timeline accordionTimeline;
   private boolean syncingTitleField;
   private boolean editingEmptyTitle;
-  private BooleanBinding pinButtonVisibleState;
+  private boolean syncingQuickTextFromModel;
+  private boolean committingQuickTextChange;
   private final Text textMeasure = new Text();
   private TextNoteEditorController richTextEditorController;
   private Timeline textContentTimeline;
+  private final PauseTransition quickTextCommitDelay = new PauseTransition(QUICK_TEXT_COMMIT_DELAY);
+  private final PauseTransition quickTextLayoutDelay = new PauseTransition(QUICK_TEXT_LAYOUT_DELAY);
+  private ChecklistFocusTarget pendingChecklistFocusTarget;
+  private Node pendingTabRedirectTarget;
+  private Scene attachedScene;
+  private final ChangeListener<Node> sceneFocusOwnerListener = (obs, oldValue, newValue) -> {
+    if (pendingTabRedirectTarget == null) {
+      return;
+    }
+    if (isSameNodeOrDescendant(pendingTabRedirectTarget, newValue)) {
+      pendingTabRedirectTarget = null;
+      return;
+    }
+    Platform.runLater(() -> {
+      if (pendingTabRedirectTarget != null
+          && !isSameNodeOrDescendant(
+              pendingTabRedirectTarget,
+              root.getScene() == null ? null : root.getScene().getFocusOwner())) {
+        focusTabTarget(pendingTabRedirectTarget);
+      }
+    });
+  };
 
   public void setContext(NoteModel note, CoNoteStore store, MainWindowController mainController) {
     this.note = note;
@@ -166,7 +205,13 @@ public class NoteCardController {
     expandedClip.heightProperty().bind(expandedContainer.maxHeightProperty());
     expandedContainer.setClip(expandedClip);
     root.setFocusTraversable(true);
+    root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabTraversal);
     root.addEventFilter(MouseEvent.MOUSE_PRESSED, this::handleCollapsedCardPress);
+    root.focusedProperty().addListener((obs, oldValue, newValue) -> {
+      if (newValue && pendingTabRedirectTarget != null) {
+        requestFocusForTabTarget(pendingTabRedirectTarget);
+      }
+    });
     previewLabel.setFocusTraversable(false);
     richPreviewFlow.setFocusTraversable(false);
     previewLabel.setPickOnBounds(true);
@@ -176,11 +221,32 @@ public class NoteCardController {
     richPreviewFlow.setOnMousePressed(this::handleCollapsedTextPreviewClick);
     MotionSupport.installCardMotion(root, expanded);
     MotionSupport.installButtonMotion(addChecklistItemButton);
+    root.hoverProperty().addListener((obs, oldValue, newValue) -> refreshActionButtonsVisibility());
+    titleField.setFocusTraversable(true);
+    pinButton.setFocusTraversable(true);
+    openWindowButton.setFocusTraversable(true);
+    quickTextArea.setFocusTraversable(true);
+    quickTextArea.setTextFormatter(new TextFormatter<>(change ->
+        change.getText() != null && change.getText().contains("\t") ? null : change));
+    quickTextArea.addEventFilter(KeyEvent.KEY_TYPED, this::consumeTabCharacterInsertion);
+    addChecklistItemButton.setFocusTraversable(true);
+    registerLoopingTabStop(titleField);
+    registerLoopingTabStop(pinButton);
+    registerLoopingTabStop(openWindowButton);
+    registerLoopingTabStop(quickTextArea);
+    registerLoopingTabStop(addChecklistItemButton);
     titleField.setPromptText(UNTITLED_NOTE_PLACEHOLDER);
     quickTextArea.setPromptText(EMPTY_TEXT_NOTE_PLACEHOLDER);
     textEditorBox.setTranslateX(TEXT_EDITOR_ALIGNMENT_OFFSET);
     quickTextArea.skinProperty().addListener((obs, oldValue, newValue) ->
-        Platform.runLater(this::normalizeQuickTextInsets));
+        Platform.runLater(() -> {
+          normalizeQuickTextInsets();
+          installQuickTextAreaTabGuards();
+          scheduleQuickTextHeightRefresh();
+        }));
+    Platform.runLater(this::installQuickTextAreaTabGuards);
+    quickTextCommitDelay.setOnFinished(event -> flushPendingQuickTextContent());
+    quickTextLayoutDelay.setOnFinished(event -> updateQuickTextHeight());
     titleField.focusedProperty().addListener((obs, oldValue, newValue) -> {
       if (!newValue && editingEmptyTitle && !hasUserTitle()) {
         editingEmptyTitle = false;
@@ -194,10 +260,17 @@ public class NoteCardController {
       }
     });
     quickTextArea.textProperty().addListener((obs, oldValue, newValue) -> {
-      if (note.getType() == NoteType.TEXT && quickTextArea.isEditable()) {
-        store.updatePlainTextContent(note, newValue);
-        updateQuickTextHeight();
+      if (note.getType() == NoteType.TEXT && quickTextArea.isEditable() && !syncingQuickTextFromModel) {
+        scheduleQuickTextPersist();
+        scheduleQuickTextHeightRefresh();
       }
+    });
+    quickTextArea.focusedProperty().addListener((obs, oldValue, newValue) -> {
+      if (newValue) {
+        scheduleQuickTextHeightRefresh();
+        return;
+      }
+      flushPendingQuickTextContent();
     });
 
     store.expandedNoteIdProperty().addListener((obs, oldValue, newValue) -> syncExpandedState());
@@ -220,20 +293,32 @@ public class NoteCardController {
       }
     });
     root.sceneProperty().addListener((obs, oldValue, newValue) -> {
+      if (oldValue != null && newValue == null) {
+        flushPendingQuickTextContent();
+      }
+      detachSceneFocusOwnerListener(oldValue);
+      attachSceneFocusOwnerListener(newValue);
       if (newValue != null) {
         Platform.runLater(this::refreshPreview);
         Platform.runLater(this::refreshInitialPinGraphic);
-        Platform.runLater(this::normalizeQuickTextInsets);
+        Platform.runLater(this::refreshActionButtonsVisibility);
+        Platform.runLater(() -> {
+          normalizeQuickTextInsets();
+          scheduleQuickTextHeightRefresh();
+        });
       }
     });
+    if (root.getScene() != null) {
+      attachSceneFocusOwnerListener(root.getScene());
+    }
 
-    pinButtonVisibleState = note.pinnedProperty().or(root.hoverProperty());
-    configureActionButton(pinButton, pinButtonVisibleState);
-    configureActionButton(openWindowButton, root.hoverProperty());
+    configureActionButton(pinButton);
+    configureActionButton(openWindowButton);
 
     syncExpandedState();
     syncPinState();
     refreshFromModel();
+    refreshActionButtonsVisibility();
     Platform.runLater(this::refreshInitialPinGraphic);
   }
 
@@ -250,6 +335,7 @@ public class NoteCardController {
     }
 
     store.setExpandedNoteId(note.getId());
+    Platform.runLater(root::requestFocus);
   }
 
   private void handleCollapsedCardPress(MouseEvent event) {
@@ -282,13 +368,17 @@ public class NoteCardController {
 
   @FXML
   private void addChecklistItem() {
-    store.addChecklistItem(note);
-    renderChecklistRows();
+    ChecklistItemModel newItem = store.addChecklistItem(note);
+    pendingChecklistFocusTarget =
+        new ChecklistFocusTarget(newItem, ChecklistFocusRole.TEXT_FIELD, note.getChecklistItems().size() - 1);
   }
 
   private void syncExpandedState() {
     boolean selected = note.getId().equals(store.expandedNoteIdProperty().get());
     boolean stateChanged = expanded.get() != selected;
+    if (!selected) {
+      flushPendingQuickTextContent();
+    }
     expanded.set(selected);
 
     if (selected) {
@@ -305,6 +395,7 @@ public class NoteCardController {
       resetCollapsedContainerState();
     }
 
+    refreshActionButtonsVisibility();
     focusExpandedEditor(selected);
   }
 
@@ -351,6 +442,11 @@ public class NoteCardController {
     checklistPreviewBox.setManaged(checklistCollapsed);
     checklistEditorBox.setVisible(checklistExpanded);
     checklistEditorBox.setManaged(checklistExpanded);
+    if (textExpanded) {
+      scheduleQuickTextHeightRefresh();
+    } else {
+      quickTextLayoutDelay.stop();
+    }
     if (showRichEditor) {
       ensureRichTextEditor();
     }
@@ -385,13 +481,15 @@ public class NoteCardController {
   }
 
   private void focusExpandedEditor(boolean selected) {
-    if (!selected || note.getType() != NoteType.TEXT) {
+    if (!selected) {
       return;
     }
 
     Platform.runLater(() -> {
-      resetExpandedTextViewportToStart();
-      normalizeQuickTextInsets();
+      if (note.getType() == NoteType.TEXT) {
+        resetExpandedTextViewportToStart();
+        normalizeQuickTextInsets();
+      }
       root.requestFocus();
     });
   }
@@ -430,6 +528,7 @@ public class NoteCardController {
     } else {
       pinButton.getStyleClass().remove("note-card-pin-active");
     }
+    refreshActionButtonsVisibility();
   }
 
   private void animateExpandedState(boolean selected) {
@@ -489,6 +588,10 @@ public class NoteCardController {
   }
 
   private void updateQuickTextHeight() {
+    if (!isPlainTextEditorVisible()) {
+      return;
+    }
+
     String text = quickTextArea.getText();
     if (text == null || text.isBlank()) {
       quickTextArea.setPrefRowCount(MIN_EXPANDED_TEXT_LINES);
@@ -503,12 +606,17 @@ public class NoteCardController {
     if (note.getType() != NoteType.TEXT) {
       return;
     }
+    if (committingQuickTextChange && quickTextArea.isEditable()) {
+      return;
+    }
     refreshPreview();
     syncQuickTextMode();
     syncQuickTextFromModel();
   }
 
   private void handleChecklistItemsChanged(ListChangeListener.Change<? extends ChecklistItemModel> change) {
+    ChecklistFocusTarget focusTarget =
+        pendingChecklistFocusTarget != null ? pendingChecklistFocusTarget : captureChecklistFocusTarget();
     boolean requiresRowRender = false;
     while (change.next()) {
       if (change.wasAdded() || change.wasRemoved() || change.wasPermutated() || change.wasReplaced()) {
@@ -523,18 +631,25 @@ public class NoteCardController {
     renderChecklistPreview();
     if (requiresRowRender && expanded.get()) {
       renderChecklistRows();
+      restoreChecklistFocus(focusTarget);
     }
     if (expanded.get()) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
+    pendingChecklistFocusTarget = null;
   }
 
   private void syncQuickTextFromModel() {
     String plainText = note.getPlainTextContent();
     if (!quickTextArea.isFocused() && !quickTextArea.getText().equals(plainText)) {
-      quickTextArea.setText(plainText);
+      syncingQuickTextFromModel = true;
+      try {
+        quickTextArea.setText(plainText);
+      } finally {
+        syncingQuickTextFromModel = false;
+      }
     }
-    updateQuickTextHeight();
+    scheduleQuickTextHeightRefresh();
     if (expanded.get() && note.getType() == NoteType.CHECKLIST) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
@@ -564,7 +679,14 @@ public class NoteCardController {
     }
 
     if (note.hasRichTextFormatting()) {
-      renderRichTextPresentation();
+      if (!expanded.get()) {
+        renderRichTextPresentation();
+      }
+      return;
+    }
+
+    if (expanded.get()) {
+      scheduleQuickTextHeightRefresh();
       return;
     }
 
@@ -573,13 +695,54 @@ public class NoteCardController {
     String plainText = note.getPlainTextContent();
     if (plainText == null || plainText.isBlank()) {
       previewLabel.setText(EMPTY_TEXT_NOTE_PLACEHOLDER);
-      updateQuickTextHeight();
       return;
     }
 
     List<String> wrappedLines = wrapTextToLines(plainText, availableTextContentWidth(), previewLabel.getFont());
     previewLabel.setText(truncateWrappedLines(wrappedLines, COLLAPSED_TEXT_PREVIEW_LINES, previewLabel.getFont()));
-    updateQuickTextHeight();
+  }
+
+  private void scheduleQuickTextPersist() {
+    if (!quickTextArea.isEditable() || note.getType() != NoteType.TEXT) {
+      return;
+    }
+    quickTextCommitDelay.playFromStart();
+  }
+
+  private void flushPendingQuickTextContent() {
+    quickTextCommitDelay.stop();
+    if (note == null || note.getType() != NoteType.TEXT || !quickTextArea.isEditable()) {
+      return;
+    }
+
+    String currentText = quickTextArea.getText();
+    String normalized = currentText == null ? "" : currentText;
+    if (normalized.equals(note.getContent())) {
+      return;
+    }
+
+    committingQuickTextChange = true;
+    try {
+      store.updatePlainTextContent(note, normalized);
+    } finally {
+      committingQuickTextChange = false;
+    }
+  }
+
+  private void scheduleQuickTextHeightRefresh() {
+    if (!isPlainTextEditorVisible()) {
+      quickTextLayoutDelay.stop();
+      return;
+    }
+    quickTextLayoutDelay.playFromStart();
+  }
+
+  private boolean isPlainTextEditorVisible() {
+    return note != null
+        && note.getType() == NoteType.TEXT
+        && quickTextArea.isEditable()
+        && textEditorBox.isVisible()
+        && textEditorBox.isManaged();
   }
 
   private void renderRichTextPresentation() {
@@ -897,6 +1060,7 @@ public class NoteCardController {
     LoadedView<TextNoteEditorController> view = ViewLoader.load("/fxml/note/TextNoteEditor.fxml");
     richTextEditorController = view.controller();
     richTextEditorController.setContext(note, store);
+    richTextEditorController.setTabTraversalHandler(this::moveFocusByTab);
     richTextEditorController.updatePalette(surfaceColor(), currentTheme());
     richTextEditorBox.getChildren().setAll(view.root());
   }
@@ -920,6 +1084,9 @@ public class NoteCardController {
     row.getStyleClass().add("inline-checklist-row");
 
     CheckBox checkBox = new CheckBox();
+    checkBox.setFocusTraversable(true);
+    registerLoopingTabStop(checkBox);
+    markChecklistFocusNode(checkBox, item, ChecklistFocusRole.CHECKBOX);
     checkBox.setSelected(item.isChecked());
     checkBox.selectedProperty().addListener((obs, oldValue, newValue) -> {
       if (item.isChecked() != newValue) {
@@ -928,6 +1095,9 @@ public class NoteCardController {
     });
 
     TextField textField = new TextField(item.getText());
+    textField.setFocusTraversable(true);
+    registerLoopingTabStop(textField);
+    markChecklistFocusNode(textField, item, ChecklistFocusRole.TEXT_FIELD);
     textField.getStyleClass().add("inline-checklist-field");
     HBox.setHgrow(textField, Priority.ALWAYS);
     textField.textProperty().addListener((obs, oldValue, newValue) -> {
@@ -953,6 +1123,9 @@ public class NoteCardController {
     HBox.setHgrow(spacer, Priority.ALWAYS);
 
     Button removeButton = new Button();
+    removeButton.setFocusTraversable(true);
+    registerLoopingTabStop(removeButton);
+    markChecklistFocusNode(removeButton, item, ChecklistFocusRole.REMOVE_BUTTON);
     removeButton.getStyleClass().add("mini-icon-button");
     IconFactory.apply(removeButton, "codicon-close", 12, "mini-action-icon");
     removeButton.setText(null);
@@ -961,6 +1134,290 @@ public class NoteCardController {
 
     row.getChildren().addAll(checkBox, textField, spacer, removeButton);
     return row;
+  }
+
+  private void handleTabTraversal(KeyEvent event) {
+    if (event.getCode() != KeyCode.TAB || !expanded.get()) {
+      return;
+    }
+
+    if (moveFocusByTab(event.isShiftDown())) {
+      event.consume();
+    }
+  }
+
+  private void installQuickTextAreaTabGuards() {
+    registerTabGuard(quickTextArea.lookup(".content"));
+    quickTextArea.lookupAll(".content").forEach(this::registerTabGuard);
+  }
+
+  private void registerTabGuard(Node node) {
+    if (node == null || node.getProperties().containsKey("noteCard.tabGuard")) {
+      return;
+    }
+
+    node.getProperties().put("noteCard.tabGuard", Boolean.TRUE);
+    node.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabTraversal);
+    node.addEventFilter(KeyEvent.KEY_TYPED, this::consumeTabCharacterInsertion);
+  }
+
+  private boolean moveFocusByTab(boolean backward) {
+    List<Node> focusTargets = collectFocusTargets();
+    if (focusTargets.isEmpty()) {
+      return false;
+    }
+
+    Node focusOwner = root.getScene() == null ? null : root.getScene().getFocusOwner();
+    int currentIndex = indexOfFocusTarget(focusTargets, focusOwner);
+    int targetIndex = currentIndex < 0
+        ? (backward ? focusTargets.size() - 1 : 0)
+        : Math.floorMod(currentIndex + (backward ? -1 : 1), focusTargets.size());
+    pendingTabRedirectTarget = focusTargets.get(targetIndex);
+    requestFocusForTabTarget(pendingTabRedirectTarget);
+    return true;
+  }
+
+  private void consumeTabCharacterInsertion(KeyEvent event) {
+    if (!expanded.get()) {
+      return;
+    }
+
+    String character = event.getCharacter();
+    if (character != null && character.contains("\t")) {
+      event.consume();
+    }
+  }
+
+  private List<Node> collectFocusTargets() {
+    List<Node> targets = new ArrayList<>();
+    appendFocusTarget(targets, titleField);
+    appendFocusTarget(targets, pinButton);
+    appendFocusTarget(targets, openWindowButton);
+    appendFocusTarget(targets, quickTextArea);
+    appendFocusTarget(targets, richTextEditorFocusTarget());
+
+    if (checklistEditorBox.isVisible() && checklistEditorBox.isManaged()) {
+      for (Node rowNode : checklistItemsBox.getChildren()) {
+        if (!(rowNode instanceof HBox row) || !row.isVisible() || !row.isManaged()) {
+          continue;
+        }
+        for (Node child : row.getChildren()) {
+          appendFocusTarget(targets, child);
+        }
+      }
+      appendFocusTarget(targets, addChecklistItemButton);
+    }
+
+    return targets;
+  }
+
+  List<Node> focusTargetsForTesting() {
+    return collectFocusTargets();
+  }
+
+  private void registerLoopingTabStop(Node node) {
+    if (node != null) {
+      node.addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabTraversal);
+      node.focusedProperty().addListener((obs, oldValue, newValue) -> {
+        if (newValue && pendingTabRedirectTarget == node) {
+          pendingTabRedirectTarget = null;
+        }
+        if (node == pinButton || node == openWindowButton) {
+          refreshActionButtonsVisibility();
+        }
+      });
+    }
+  }
+
+  private void requestFocusForTabTarget(Node target) {
+    focusTabTarget(target);
+    Platform.runLater(() -> {
+      if (!isSameNodeOrDescendant(target, root.getScene() == null ? null : root.getScene().getFocusOwner())) {
+        focusTabTarget(target);
+        Platform.runLater(() -> {
+          if (!isSameNodeOrDescendant(target, root.getScene() == null ? null : root.getScene().getFocusOwner())) {
+            focusTabTarget(target);
+          }
+        });
+      }
+    });
+  }
+
+  private void attachSceneFocusOwnerListener(Scene scene) {
+    if (scene == null) {
+      return;
+    }
+    scene.focusOwnerProperty().addListener(sceneFocusOwnerListener);
+    attachedScene = scene;
+  }
+
+  private void detachSceneFocusOwnerListener(Scene scene) {
+    if (scene == null) {
+      return;
+    }
+    scene.focusOwnerProperty().removeListener(sceneFocusOwnerListener);
+    if (scene == attachedScene) {
+      attachedScene = null;
+    }
+  }
+
+  private void focusTabTarget(Node target) {
+    if (target == null
+        || target.getScene() == null
+        || !isEffectivelyVisible(target)
+        || target.isDisabled()) {
+      return;
+    }
+
+    if (target == richTextEditorFocusTarget() && richTextEditorController != null) {
+      richTextEditorController.requestEditorFocus();
+      return;
+    }
+
+    target.requestFocus();
+    if (target instanceof TextInputControl textInputControl) {
+      textInputControl.positionCaret(textInputControl.getLength());
+    }
+  }
+
+  private Node richTextEditorFocusTarget() {
+    return richTextEditorController == null ? null : richTextEditorController.focusTarget();
+  }
+
+  private void appendFocusTarget(List<Node> targets, Node candidate) {
+    if (candidate != null
+        && isEffectivelyVisible(candidate)
+        && candidate.isFocusTraversable()
+        && !candidate.isDisabled()
+        && !candidate.isMouseTransparent()) {
+      targets.add(candidate);
+    }
+  }
+
+  private boolean isEffectivelyVisible(Node node) {
+    if (node == null || node.getScene() == null) {
+      return false;
+    }
+
+    Node current = node;
+    while (current != null) {
+      if (!current.isVisible() || !current.isManaged()) {
+        return false;
+      }
+      current = current.getParent();
+    }
+    return true;
+  }
+
+  private int indexOfFocusTarget(List<Node> focusTargets, Node focusOwner) {
+    for (int index = 0; index < focusTargets.size(); index++) {
+      if (isSameNodeOrDescendant(focusTargets.get(index), focusOwner)) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  private ChecklistFocusTarget captureChecklistFocusTarget() {
+    if (!expanded.get() || note.getType() != NoteType.CHECKLIST || root.getScene() == null) {
+      return null;
+    }
+
+    Node focusOwner = root.getScene().getFocusOwner();
+    if (focusOwner == null || !isSameNodeOrDescendant(checklistEditorBox, focusOwner)) {
+      return null;
+    }
+
+    if (isSameNodeOrDescendant(addChecklistItemButton, focusOwner)) {
+      return new ChecklistFocusTarget(null, ChecklistFocusRole.ADD_BUTTON, note.getChecklistItems().size());
+    }
+
+    Node roleNode = findChecklistFocusNode(focusOwner);
+    if (roleNode == null) {
+      return null;
+    }
+
+    ChecklistFocusRole role =
+        roleNode.getProperties().get("noteCard.checklistRole") instanceof ChecklistFocusRole roleValue
+            ? roleValue
+        : null;
+    ChecklistItemModel item =
+        roleNode.getProperties().get("noteCard.checklistItem") instanceof ChecklistItemModel itemValue
+            ? itemValue
+        : null;
+    if (role == null) {
+      return null;
+    }
+    return new ChecklistFocusTarget(item, role, item == null ? -1 : note.getChecklistItems().indexOf(item));
+  }
+
+  private void restoreChecklistFocus(ChecklistFocusTarget focusTarget) {
+    if (focusTarget == null) {
+      return;
+    }
+
+    Platform.runLater(() -> {
+      Node focusNode = resolveChecklistFocusNode(focusTarget);
+      if (focusNode != null) {
+        focusNode.requestFocus();
+      }
+    });
+  }
+
+  private Node resolveChecklistFocusNode(ChecklistFocusTarget focusTarget) {
+    if (focusTarget.role() == ChecklistFocusRole.ADD_BUTTON) {
+      return addChecklistItemButton;
+    }
+
+    ChecklistItemModel targetItem = focusTarget.item();
+    if (targetItem == null || !note.getChecklistItems().contains(targetItem)) {
+      if (note.getChecklistItems().isEmpty()) {
+        return addChecklistItemButton;
+      }
+      int safeIndex = Math.min(Math.max(focusTarget.index(), 0), note.getChecklistItems().size() - 1);
+      targetItem = note.getChecklistItems().get(safeIndex);
+    }
+
+    for (Node rowNode : checklistItemsBox.getChildren()) {
+      if (!(rowNode instanceof HBox row)) {
+        continue;
+      }
+      for (Node rowChild : row.getChildren()) {
+        if (rowChild.getProperties().get("noteCard.checklistItem") == targetItem
+            && rowChild.getProperties().get("noteCard.checklistRole") == focusTarget.role()) {
+          return rowChild;
+        }
+      }
+    }
+
+    return addChecklistItemButton;
+  }
+
+  private Node findChecklistFocusNode(Node node) {
+    Node current = node;
+    while (current != null) {
+      if (current.getProperties().containsKey("noteCard.checklistRole")) {
+        return current;
+      }
+      current = current.getParent();
+    }
+    return null;
+  }
+
+  private void markChecklistFocusNode(Node node, ChecklistItemModel item, ChecklistFocusRole role) {
+    node.getProperties().put("noteCard.checklistItem", item);
+    node.getProperties().put("noteCard.checklistRole", role);
+  }
+
+  private boolean isSameNodeOrDescendant(Node ancestor, Node node) {
+    Node current = node;
+    while (current != null) {
+      if (current == ancestor) {
+        return true;
+      }
+      current = current.getParent();
+    }
+    return false;
   }
 
   private String buildChecklistPreviewText() {
@@ -1022,15 +1479,41 @@ public class NoteCardController {
     }
   }
 
-  private void configureActionButton(Button button, ObservableBooleanValue visibleState) {
+  private void configureActionButton(Button button) {
     button.setVisible(true);
     button.setManaged(true);
-    button.setFocusTraversable(false);
+    button.setFocusTraversable(true);
     button.setPickOnBounds(true);
     configureActionGraphic(button);
-    button.setOpacity(visibleState.get() ? 1.0 : 0.0);
-    button.setMouseTransparent(!visibleState.get());
-    visibleState.addListener((obs, oldValue, newValue) -> animateActionButton(button, newValue));
+    button.setOpacity(0.0);
+    button.setMouseTransparent(true);
+  }
+
+  private void refreshActionButtonsVisibility() {
+    boolean showPin = shouldShowPinButton();
+    boolean showOpen = shouldShowOpenWindowButton();
+    updateActionButtonVisibility(pinButton, showPin);
+    updateActionButtonVisibility(openWindowButton, showOpen);
+  }
+
+  private boolean shouldShowPinButton() {
+    return note != null && (note.isPinned() || root.isHover() || expanded.get() || pinButton.isFocused());
+  }
+
+  private boolean shouldShowOpenWindowButton() {
+    return root.isHover() || expanded.get() || openWindowButton.isFocused();
+  }
+
+  private void updateActionButtonVisibility(Button button, boolean visible) {
+    if (button == null) {
+      return;
+    }
+    if (button.getScene() == null) {
+      button.setOpacity(visible ? 1.0 : 0.0);
+      button.setMouseTransparent(!visible);
+      return;
+    }
+    animateActionButton(button, visible);
   }
 
   private void animateActionButton(Button button, boolean visible) {

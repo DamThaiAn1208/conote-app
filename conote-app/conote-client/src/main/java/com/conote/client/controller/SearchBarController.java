@@ -7,11 +7,13 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.shape.SVGPath;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 public class SearchBarController {
   private static final String FILTER_ACTIVE_CLASS = "filter-toggle-button-active";
   private static final String SEARCH_FOCUS_CLASS = "search-shell-focused";
+  private static final String DEFAULT_FILTER_ICON = "codicon-filter:17";
+  private static final String ACTIVE_FILTER_ICON = "codicon-list-filter:17";
 
   @FXML
   private HBox searchShell;
@@ -23,7 +25,7 @@ public class SearchBarController {
   private Button filterButton;
 
   @FXML
-  private SVGPath filterIcon;
+  private FontIcon filterIcon;
 
   private Runnable toggleFiltersAction;
   private boolean filterActive;
@@ -94,6 +96,9 @@ public class SearchBarController {
     filterButton.getStyleClass().remove(FILTER_ACTIVE_CLASS);
     if (filterActive) {
       filterButton.getStyleClass().add(FILTER_ACTIVE_CLASS);
+    }
+    if (filterIcon != null) {
+      filterIcon.setIconLiteral(filterActive ? ACTIVE_FILTER_ICON : DEFAULT_FILTER_ICON);
     }
   }
 
