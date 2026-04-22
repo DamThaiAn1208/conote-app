@@ -31,7 +31,7 @@
         <Insets bottom="0.0" left="16.0" right="16.0" top="0.0" />
       </padding>
       <children>
-        <FontIcon iconLiteral="codicon-add:16">
+        <FontIcon iconLiteral="codicon-add:17">
           <styleClass>
             <String fx:value="button-leading-icon" />
             <String fx:value="create-note-leading-icon" />

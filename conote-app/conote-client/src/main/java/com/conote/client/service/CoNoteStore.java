@@ -46,18 +46,16 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 
 public class CoNoteStore {
-  private static final double DEFAULT_WINDOW_WIDTH = 500.0;
+  private static final double DEFAULT_WINDOW_WIDTH = 480.0;
   private static final double DEFAULT_WINDOW_HEIGHT = 760.0;
   private static final String DEFAULT_LOCAL_USER_NAME = "CoNote Local User";
   private static final String DEFAULT_LOCAL_USER_EMAIL = "local@conote.app";
 
   private final ObservableList<NoteModel> notes =
       FXCollections.observableArrayList(note -> note.extractor());
-  private final FilteredList<NoteModel> filteredNotes = new FilteredList<>(notes);
-  private final SortedList<NoteModel> visibleNotes = new SortedList<>(filteredNotes);
+  private final FilteredList<NoteModel> visibleNotes = new FilteredList<>(notes);
   private final StringProperty searchQuery = new SimpleStringProperty("");
   private final ObjectProperty<SortMode> sortMode = new SimpleObjectProperty<>(SortMode.NEWEST);
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(AppTheme.LIGHT);
@@ -90,7 +88,7 @@ public class CoNoteStore {
   }
 
   private void bindFiltering() {
-    filteredNotes.setPredicate(this::matchesFilters);
+    visibleNotes.setPredicate(this::matchesFilters);
     searchQuery.addListener((obs, oldValue, newValue) -> refreshFilters());
     selectedTags.addListener((SetChangeListener<String>) change -> refreshFilters());
     selectedColors.addListener((SetChangeListener<NoteColor>) change -> refreshFilters());
@@ -98,9 +96,7 @@ public class CoNoteStore {
   }
 
   private void bindSorting() {
-    visibleNotes.setComparator(createComparator(sortMode.get()));
-    sortMode.addListener((obs, oldValue, newValue) ->
-        visibleNotes.setComparator(createComparator(newValue)));
+    sortMode.addListener((obs, oldValue, newValue) -> applySortModeOrdering(newValue));
   }
 
   private void loadUiState() {
@@ -139,6 +135,7 @@ public class CoNoteStore {
     }
 
     notes.setAll(loadedModels);
+    applySortModeOrdering(sortMode.get());
     loading.set(false);
   }
 
@@ -178,13 +175,14 @@ public class CoNoteStore {
   }
 
   private Comparator<NoteModel> createComparator(SortMode mode) {
-    Comparator<NoteModel> byUpdated = Comparator.comparingLong(NoteModel::getUpdatedAt);
+    Comparator<NoteModel> byCreatedAt = Comparator.comparingLong(NoteModel::getCreatedAt);
     if (mode == SortMode.NEWEST) {
-      byUpdated = byUpdated.reversed();
+      byCreatedAt = byCreatedAt.reversed();
     }
     return Comparator
         .comparing(NoteModel::isPinned, Comparator.reverseOrder())
-        .thenComparing(byUpdated);
+        .thenComparing(byCreatedAt)
+        .thenComparing(NoteModel::getId);
   }
 
   private String safe(String value) {
@@ -210,7 +208,7 @@ public class CoNoteStore {
     noteEntitiesById.put(saved.getNoteId(), saved);
 
     NoteModel model = toNoteModel(saved);
-    notes.add(model);
+    insertCreatedNote(model);
     expandedNoteId.set(model.getId());
     enqueueSync(saved, SyncActionType.CREATE_NOTE);
     return model;
@@ -235,7 +233,7 @@ public class CoNoteStore {
   }
 
   public void refreshFilters() {
-    filteredNotes.setPredicate(this::matchesFilters);
+    visibleNotes.setPredicate(this::matchesFilters);
   }
 
   public void setSearchQuery(String value) {
@@ -260,6 +258,20 @@ public class CoNoteStore {
 
   public void setSortMode(SortMode value) {
     sortMode.set(value == null ? SortMode.NEWEST : value);
+  }
+
+  public boolean hasActiveFilters() {
+    SortMode activeSort = sortMode.get() == null ? SortMode.NEWEST : sortMode.get();
+    return activeSort != SortMode.NEWEST
+        || !selectedTags.isEmpty()
+        || !selectedColors.isEmpty();
+  }
+
+  public void clearAllFilters() {
+    setSortMode(SortMode.NEWEST);
+    selectedTags.clear();
+    selectedColors.clear();
+    refreshFilters();
   }
 
   public void setTheme(AppTheme value) {
@@ -316,7 +328,11 @@ public class CoNoteStore {
   public void togglePin(NoteModel note) {
     if (note != null) {
       note.setPinned(!note.isPinned());
-      persistNote(note, note.isPinned() ? SyncActionType.PIN_NOTE : SyncActionType.UNPIN_NOTE);
+      moveNoteForPinState(note);
+      persistNote(
+          note,
+          note.isPinned() ? SyncActionType.PIN_NOTE : SyncActionType.UNPIN_NOTE,
+          true);
     }
   }
 
@@ -406,7 +422,7 @@ public class CoNoteStore {
     return notes;
   }
 
-  public SortedList<NoteModel> getVisibleNotes() {
+  public ObservableList<NoteModel> getVisibleNotes() {
     return visibleNotes;
   }
 
@@ -447,13 +463,11 @@ public class CoNoteStore {
   }
 
   public double getWindowWidth() {
-    double width = uiState == null ? DEFAULT_WINDOW_WIDTH : uiState.getWindowWidth();
-    return width > 0 ? width : DEFAULT_WINDOW_WIDTH;
+    return DEFAULT_WINDOW_WIDTH;
   }
 
   public double getWindowHeight() {
-    double height = uiState == null ? DEFAULT_WINDOW_HEIGHT : uiState.getWindowHeight();
-    return height > 0 ? height : DEFAULT_WINDOW_HEIGHT;
+    return DEFAULT_WINDOW_HEIGHT;
   }
 
   public void updateWindowSize(double width, double height) {
@@ -476,7 +490,11 @@ public class CoNoteStore {
   }
 
   private void persistNote(NoteModel noteModel, SyncActionType actionType) {
-    Note persisted = noteCacheStore.save(toNoteEntity(noteModel));
+    persistNote(noteModel, actionType, false);
+  }
+
+  private void persistNote(NoteModel noteModel, SyncActionType actionType, boolean preserveUpdatedAt) {
+    Note persisted = noteCacheStore.save(toNoteEntity(noteModel), preserveUpdatedAt);
     noteEntitiesById.put(persisted.getNoteId(), persisted);
     noteModel.setCreatedAt(toEpochMillis(persisted.getCreatedAt()));
     noteModel.setUpdatedAt(toEpochMillis(persisted.getUpdatedAt()));
@@ -550,6 +568,39 @@ public class CoNoteStore {
     model.getTags().setAll(extractTagNames(note));
     model.getShareMembers().setAll(extractShareMembers(note));
     return model;
+  }
+
+  private void applySortModeOrdering(SortMode mode) {
+    FXCollections.sort(notes, createComparator(mode));
+  }
+
+  private void insertCreatedNote(NoteModel note) {
+    if (note == null) {
+      return;
+    }
+
+    int targetIndex = sortMode.get() == SortMode.NEWEST ? firstUnpinnedIndex() : notes.size();
+    notes.add(targetIndex, note);
+  }
+
+  private void moveNoteForPinState(NoteModel note) {
+    int currentIndex = notes.indexOf(note);
+    if (currentIndex < 0) {
+      return;
+    }
+
+    notes.remove(currentIndex);
+    int targetIndex = note.isPinned() ? 0 : firstUnpinnedIndex();
+    notes.add(targetIndex, note);
+  }
+
+  private int firstUnpinnedIndex() {
+    for (int index = 0; index < notes.size(); index++) {
+      if (!notes.get(index).isPinned()) {
+        return index;
+      }
+    }
+    return notes.size();
   }
 
   private List<Tag> buildTags(Note note, List<String> tagNames, User owner) {

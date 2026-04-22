@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.TextFlow?>
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
@@ -31,11 +32,7 @@
         <Region HBox.hgrow="ALWAYS" />
         <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="note-card-actions">
           <children>
-            <Button fx:id="pinButton" managed="false" mnemonicParsing="false" onAction="#togglePin" styleClass="note-icon-button" visible="false">
-              <graphic>
-                <FontIcon iconLiteral="codicon-pinned:15" styleClass="card-action-icon pinned-icon" />
-              </graphic>
-            </Button>
+            <Button fx:id="pinButton" managed="false" mnemonicParsing="false" onAction="#togglePin" styleClass="note-icon-button" visible="false" />
             <Button fx:id="openWindowButton" managed="false" mnemonicParsing="false" onAction="#openNoteWindow" styleClass="note-icon-button" visible="false">
               <graphic>
                 <FontIcon iconLiteral="codicon-link-external:15" styleClass="card-action-icon" />
@@ -45,17 +42,23 @@
         </HBox>
       </children>
     </HBox>
-    <Label fx:id="previewLabel" maxHeight="42.0" styleClass="note-card-preview" text="Preview" wrapText="true" />
-    <VBox fx:id="checklistPreviewBox" managed="false" spacing="6.0" visible="false" />
+    <StackPane fx:id="textContentStack" managed="false" visible="false">
+      <children>
+        <Label fx:id="previewLabel" styleClass="note-card-preview" text="Preview" wrapText="true" StackPane.alignment="TOP_LEFT" />
+        <TextFlow fx:id="richPreviewFlow" managed="false" visible="false" StackPane.alignment="TOP_LEFT" />
+        <VBox fx:id="richTextEditorBox" managed="false" visible="false" StackPane.alignment="TOP_LEFT" />
+        <VBox fx:id="textEditorBox" managed="false" visible="false" StackPane.alignment="TOP_LEFT">
+          <children>
+            <TextArea fx:id="quickTextArea" prefRowCount="3" styleClass="quick-note-textarea" wrapText="true" />
+          </children>
+        </VBox>
+      </children>
+    </StackPane>
+    <VBox fx:id="checklistPreviewBox" managed="false" spacing="8.0" visible="false" />
     <StackPane fx:id="expandedContainer" managed="false" maxHeight="0.0" opacity="0.0" visible="false">
       <children>
         <VBox fx:id="expandedContent" spacing="10.0" styleClass="expanded-card-body">
           <children>
-            <VBox fx:id="textEditorBox" managed="false" visible="false">
-              <children>
-                <TextArea fx:id="quickTextArea" prefRowCount="5" styleClass="quick-note-textarea" wrapText="true" />
-              </children>
-            </VBox>
             <VBox fx:id="checklistEditorBox" managed="false" spacing="8.0" visible="false">
               <children>
                 <VBox fx:id="checklistItemsBox" spacing="8.0" />
@@ -66,12 +69,16 @@
         </VBox>
       </children>
     </StackPane>
-    <FlowPane fx:id="tagsFlow" hgap="8.0" vgap="8.0" />
-    <HBox alignment="CENTER_RIGHT">
+    <VBox spacing="4.0" styleClass="note-card-meta">
       <children>
-        <Region HBox.hgrow="ALWAYS" />
-        <Label fx:id="dateLabel" styleClass="note-card-date" text="Apr 17" />
+        <FlowPane fx:id="tagsFlow" hgap="8.0" vgap="8.0" />
+        <HBox alignment="CENTER_RIGHT" styleClass="note-card-date-row">
+          <children>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="dateLabel" styleClass="note-card-date" text="Apr 17" />
+          </children>
+        </HBox>
       </children>
-    </HBox>
+    </VBox>
   </children>
 </VBox>
