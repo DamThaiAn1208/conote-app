@@ -27,18 +27,25 @@ public class ClientApplication extends Application {
   public void start(Stage stage) {
     ClientStoragePaths.init();
     LoadedView<MainWindowController> view = ViewLoader.load("/fxml/main/MainWindow.fxml");
+    double initialWidth = view.controller().getInitialWindowWidth();
+    double initialHeight = view.controller().getInitialWindowHeight();
 
     Scene scene = new Scene(
         view.root(),
-        view.controller().getInitialWindowWidth(),
-        view.controller().getInitialWindowHeight());
+        initialWidth,
+        initialHeight);
     scene.setFill(Color.TRANSPARENT);
     scene.getStylesheets().add(stylesheetUrl());
 
     stage.initStyle(StageStyle.TRANSPARENT);
     stage.setTitle("CoNote");
-    stage.setMinWidth(500);
-    stage.setMinHeight(620);
+    stage.setWidth(initialWidth);
+    stage.setHeight(initialHeight);
+    stage.setMinWidth(initialWidth);
+    stage.setMaxWidth(initialWidth);
+    stage.setMinHeight(initialHeight);
+    stage.setMaxHeight(initialHeight);
+    stage.setResizable(false);
     stage.setScene(scene);
     view.controller().bindPrimaryStage(stage);
     installWindowIcon(stage);

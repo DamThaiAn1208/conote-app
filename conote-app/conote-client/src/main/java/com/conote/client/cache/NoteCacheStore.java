@@ -50,6 +50,10 @@ public class NoteCacheStore {
   }
 
   public Note save(Note note) {
+    return save(note, false);
+  }
+
+  public Note save(Note note, boolean preserveUpdatedAt) {
     List<Note> notes = findAll();
     Map<String, Integer> indexById = new LinkedHashMap<>();
     for (int index = 0; index < notes.size(); index++) {
@@ -60,7 +64,7 @@ public class NoteCacheStore {
     }
 
     Note existing = note == null || note.getNoteId() == null ? null : findExisting(notes, note.getNoteId());
-    Note prepared = prepareForSave(note, existing);
+    Note prepared = prepareForSave(note, existing, preserveUpdatedAt);
     Integer existingIndex = prepared.getNoteId() == null ? null : indexById.get(prepared.getNoteId());
     if (existingIndex == null) {
       notes.add(prepared);
@@ -87,7 +91,7 @@ public class NoteCacheStore {
         if (note == null) {
           continue;
         }
-        prepared.add(prepareForSave(note, existingById.get(note.getNoteId())));
+        prepared.add(prepareForSave(note, existingById.get(note.getNoteId()), false));
       }
     }
 
@@ -140,7 +144,7 @@ public class NoteCacheStore {
     return note;
   }
 
-  private Note prepareForSave(Note note, Note existing) {
+  private Note prepareForSave(Note note, Note existing, boolean preserveUpdatedAt) {
     Note target = note == null ? new Note() : note;
     LocalDateTime now = LocalDateTime.now();
 
@@ -150,7 +154,13 @@ public class NoteCacheStore {
     if (target.getCreatedAt() == null) {
       target.setCreatedAt(existing != null && existing.getCreatedAt() != null ? existing.getCreatedAt() : now);
     }
-    target.setUpdatedAt(now);
+    if (preserveUpdatedAt) {
+      if (target.getUpdatedAt() == null) {
+        target.setUpdatedAt(existing != null && existing.getUpdatedAt() != null ? existing.getUpdatedAt() : now);
+      }
+    } else {
+      target.setUpdatedAt(now);
+    }
     if (target.getPinned() == null) {
       target.setPinned(existing != null && existing.getPinned() != null ? existing.getPinned() : false);
     }
