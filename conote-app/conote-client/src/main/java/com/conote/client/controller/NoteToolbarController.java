@@ -15,8 +15,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.util.Duration;
 
 public class NoteToolbarController {
-  static final double ROOT_WIDTH = 80.0;
-  static final double HANDLE_WIDTH = 24.0;
+  static final double ROOT_WIDTH = 78.0;
+  static final double HANDLE_WIDTH = 22.0;
   static final double PANEL_WIDTH = ROOT_WIDTH - HANDLE_WIDTH;
   static final double COLLAPSED_ROOT_TRANSLATE = -(ROOT_WIDTH - HANDLE_WIDTH);
   static final double COLLAPSED_TOOL_TRANSLATE = -12.0;
