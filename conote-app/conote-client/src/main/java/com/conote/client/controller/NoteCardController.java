@@ -169,6 +169,7 @@ public class NoteCardController {
   private boolean syncingTitleField;
   private boolean editingEmptyTitle;
   private boolean syncingQuickTextFromModel;
+  private boolean quickTextDirty;
   private boolean committingQuickTextChange;
   private final Text textMeasure = new Text();
   private TextNoteEditorController richTextEditorController;
@@ -261,6 +262,7 @@ public class NoteCardController {
     });
     quickTextArea.textProperty().addListener((obs, oldValue, newValue) -> {
       if (note.getType() == NoteType.TEXT && quickTextArea.isEditable() && !syncingQuickTextFromModel) {
+        quickTextDirty = true;
         scheduleQuickTextPersist();
         scheduleQuickTextHeightRefresh();
       }
@@ -320,6 +322,13 @@ public class NoteCardController {
     refreshFromModel();
     refreshActionButtonsVisibility();
     Platform.runLater(this::refreshInitialPinGraphic);
+  }
+
+  public void flushPendingChanges() {
+    flushPendingQuickTextContent();
+    if (richTextEditorController != null) {
+      richTextEditorController.flushPendingContent();
+    }
   }
 
   @FXML
@@ -641,10 +650,12 @@ public class NoteCardController {
 
   private void syncQuickTextFromModel() {
     String plainText = note.getPlainTextContent();
-    if (!quickTextArea.isFocused() && !quickTextArea.getText().equals(plainText)) {
+    String currentText = quickTextArea.getText() == null ? "" : quickTextArea.getText();
+    if (!quickTextDirty && !currentText.equals(plainText)) {
       syncingQuickTextFromModel = true;
       try {
         quickTextArea.setText(plainText);
+        quickTextDirty = false;
       } finally {
         syncingQuickTextFromModel = false;
       }
@@ -714,16 +725,21 @@ public class NoteCardController {
     if (note == null || note.getType() != NoteType.TEXT || !quickTextArea.isEditable()) {
       return;
     }
+    if (!quickTextDirty) {
+      return;
+    }
 
     String currentText = quickTextArea.getText();
     String normalized = currentText == null ? "" : currentText;
-    if (normalized.equals(note.getContent())) {
+    if (normalized.equals(note.getPlainTextContent())) {
+      quickTextDirty = false;
       return;
     }
 
     committingQuickTextChange = true;
     try {
       store.updatePlainTextContent(note, normalized);
+      quickTextDirty = false;
     } finally {
       committingQuickTextChange = false;
     }

@@ -32,6 +32,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 public class NoteWindowController {
+  private static final double WINDOW_CORNER_RADIUS = 5.0;
+  private static final double WINDOW_CORNER_ARC = WINDOW_CORNER_RADIUS * 2.0;
   private static final DateTimeFormatter FOOTER_TIME =
       DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy", Locale.ENGLISH);
 
@@ -94,6 +96,7 @@ public class NoteWindowController {
   private final Rectangle overlayClip = new Rectangle();
   private final Rectangle windowShellClip = new Rectangle();
   private ParallelTransition sidebarTransition;
+  private boolean suppressPendingFlush;
 
   @FXML
   private void initialize() {
@@ -106,13 +109,13 @@ public class NoteWindowController {
     overlayLayer.setMouseTransparent(true);
     windowShellClip.widthProperty().bind(windowShell.widthProperty());
     windowShellClip.heightProperty().bind(windowShell.heightProperty());
-    windowShellClip.setArcWidth(10.0);
-    windowShellClip.setArcHeight(10.0);
+    windowShellClip.setArcWidth(WINDOW_CORNER_ARC);
+    windowShellClip.setArcHeight(WINDOW_CORNER_ARC);
     windowShell.setClip(windowShellClip);
     overlayClip.widthProperty().bind(windowFrame.widthProperty());
     overlayClip.heightProperty().bind(windowFrame.heightProperty());
-    overlayClip.setArcWidth(10.0);
-    overlayClip.setArcHeight(10.0);
+    overlayClip.setArcWidth(WINDOW_CORNER_ARC);
+    overlayClip.setArcHeight(WINDOW_CORNER_ARC);
     overlayLayer.setClip(overlayClip);
   }
 
@@ -120,6 +123,11 @@ public class NoteWindowController {
     this.note = note;
     this.store = store;
     this.stage = stage;
+    this.suppressPendingFlush = false;
+
+    if (this.stage != null) {
+      this.stage.setOnHiding(event -> flushPendingChanges());
+    }
 
     overlayLayer.setVisible(false);
     overlayLayer.setManaged(false);
@@ -153,6 +161,10 @@ public class NoteWindowController {
     refreshFromModel();
   }
 
+  public void flushPendingEdits() {
+    flushPendingChanges();
+  }
+
   public void showShareDialog() {
     LoadedView<ShareDialogController> view =
         ViewLoader.load("/fxml/dialog/ShareDialog.fxml");
@@ -180,6 +192,7 @@ public class NoteWindowController {
 
   @FXML
   public void closeWindow() {
+    flushPendingChanges();
     if (stage != null) {
       stage.close();
     }
@@ -215,10 +228,20 @@ public class NoteWindowController {
     refreshSurface();
   }
 
+  private void flushPendingChanges() {
+    if (suppressPendingFlush || note == null || store == null) {
+      return;
+    }
+
+    store.updateTitle(note, titleField == null ? null : titleField.getText());
+    textNoteEditorController.flushPendingContent();
+  }
+
   private void refreshEditorVisibility() {
     boolean isText = note.getType() == NoteType.TEXT;
     textNoteEditorController.setVisible(isText);
     checklistNoteEditorController.setVisible(!isText);
+    refreshToolbarVisibility(isText);
   }
 
   private void refreshFooterTimes() {
@@ -240,8 +263,11 @@ public class NoteWindowController {
 
   private void deleteNote() {
     closeOverlay();
+    suppressPendingFlush = true;
     store.deleteNote(note);
-    closeWindow();
+    if (stage != null) {
+      stage.close();
+    }
   }
 
   private void showOverlay(Parent content) {
@@ -266,6 +292,10 @@ public class NoteWindowController {
   }
 
   private void playSidebarAnimation(boolean collapsed) {
+    if (note == null || note.getType() != NoteType.TEXT) {
+      return;
+    }
+
     if (sidebarTransition != null) {
       sidebarTransition.stop();
     }
@@ -309,6 +339,34 @@ public class NoteWindowController {
     sidebarTransition = new ParallelTransition(toolbarTimeline, sidebarSpaceTimeline);
     sidebarTransition.setOnFinished(event -> noteToolbarController.finishSidebarAnimation(collapsed));
     sidebarTransition.play();
+  }
+
+  private void refreshToolbarVisibility(boolean isText) {
+    if (sidebarTransition != null) {
+      sidebarTransition.stop();
+      sidebarTransition = null;
+    }
+
+    noteToolbarController.setToolbarVisible(isText);
+    if (!isText) {
+      noteSidebarSpace.setVisible(false);
+      noteSidebarSpace.setManaged(false);
+      noteSidebarSpace.setMinWidth(0.0);
+      noteSidebarSpace.setPrefWidth(0.0);
+      noteSidebarSpace.setMaxWidth(0.0);
+      return;
+    }
+
+    boolean collapsed = noteToolbarController.isCollapsed();
+    double sidebarWidth = collapsed
+        ? NoteToolbarController.HANDLE_WIDTH
+        : NoteToolbarController.ROOT_WIDTH;
+    noteSidebarSpace.setVisible(true);
+    noteSidebarSpace.setManaged(true);
+    noteSidebarSpace.setMinWidth(sidebarWidth);
+    noteSidebarSpace.setPrefWidth(sidebarWidth);
+    noteSidebarSpace.setMaxWidth(sidebarWidth);
+    noteToolbarController.applyCollapsedState(collapsed);
   }
 
   private void refreshSurface() {

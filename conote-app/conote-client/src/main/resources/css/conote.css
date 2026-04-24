@@ -37,7 +37,7 @@
 
 .note-window-root {
   -fx-background-color: transparent;
-  -fx-padding: 10px;
+  -fx-padding: 14px;
 }
 
 .note-list-surface {
@@ -1202,7 +1202,14 @@
 }
 
 .note-window {
-  -fx-background-color: rgba(255, 255, 255, 0.965);
+  -fx-background-color: rgba(255, 255, 255, 0.985);
+  -fx-background-radius: 5px;
+  -fx-border-color: rgba(226, 232, 240, 0.9);
+  -fx-border-width: 1px;
+  -fx-border-radius: 5px;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 22, 0.12, 0, 4);
 }
 
 .note-window-shell {
@@ -1214,7 +1221,7 @@
   -fx-min-height: 38px;
   -fx-pref-height: 38px;
   -fx-max-height: 38px;
-  -fx-padding: 0 14px 0 14px;
+  -fx-padding: 0 16px 0 16px;
   -fx-border-color: transparent transparent rgba(226, 232, 240, 0.78) transparent;
   -fx-border-width: 0 0 1 0;
   -fx-background-color: rgba(255, 255, 255, 0.18);
@@ -1232,7 +1239,7 @@
 }
 
 .note-body-content {
-  -fx-padding: 22px 20px 20px 22px;
+  -fx-padding: 24px 22px 24px 22px;
 }
 
 .note-toolbar-panel {
@@ -1420,29 +1427,30 @@
 }
 
 .note-sidebar-toggle-button {
-  -fx-background-color: rgba(255, 255, 255, 0.96);
-  -fx-border-color: rgba(148, 163, 184, 0.62) rgba(148, 163, 184, 0.62) rgba(148, 163, 184, 0.62) transparent;
+  -fx-background-color: rgba(255, 255, 255, 0.97);
+  -fx-border-color: rgba(203, 213, 225, 0.9) rgba(203, 213, 225, 0.9) rgba(203, 213, 225, 0.9) transparent;
   -fx-border-width: 1px 1px 1px 0;
-  -fx-background-radius: 0 8px 8px 0;
-  -fx-border-radius: 0 8px 8px 0;
+  -fx-background-radius: 0 9px 9px 0;
+  -fx-border-radius: 0 9px 9px 0;
   -fx-background-insets: 0;
   -fx-border-insets: 0;
   -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 6, 0.12, 0, 1);
   -fx-alignment: center;
-  -fx-min-width: 22px;
-  -fx-pref-width: 22px;
-  -fx-min-height: 30px;
-  -fx-pref-height: 30px;
-  -fx-max-width: 22px;
-  -fx-max-height: 30px;
+  -fx-content-display: graphic-only;
+  -fx-graphic-text-gap: 0;
+  -fx-min-width: 18px;
+  -fx-pref-width: 18px;
+  -fx-min-height: 34px;
+  -fx-pref-height: 34px;
+  -fx-max-width: 18px;
+  -fx-max-height: 34px;
   -fx-padding: 0;
   -fx-cursor: hand;
-  -fx-content-display: graphic-only;
 }
 
 .note-sidebar-toggle-button:hover {
   -fx-background-color: rgba(255, 255, 255, 0.995);
-  -fx-border-color: rgba(100, 116, 139, 0.7) rgba(100, 116, 139, 0.7) rgba(100, 116, 139, 0.7) transparent;
+  -fx-border-color: rgba(203, 213, 225, 0.94) rgba(203, 213, 225, 0.94) rgba(203, 213, 225, 0.94) transparent;
 }
 
 .note-sidebar-toggle-icon {
@@ -1952,6 +1960,17 @@
   -fx-background-color: rgba(15, 23, 42, 0.72);
 }
 
+.theme-dark .note-window {
+  -fx-background-color: rgba(15, 23, 42, 0.96);
+  -fx-background-radius: 5px;
+  -fx-border-color: rgba(148, 163, 184, 0.22);
+  -fx-border-width: 1px;
+  -fx-border-radius: 5px;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.28), 22, 0.14, 0, 4);
+}
+
 .theme-dark .note-window-title-bar {
   -fx-border-color: transparent transparent rgba(148, 163, 184, 0.18) transparent;
   -fx-background-color: rgba(15, 23, 42, 0.18);
@@ -2019,13 +2038,13 @@
 
 .theme-dark .note-sidebar-toggle-button {
   -fx-background-color: rgba(15, 23, 42, 0.96);
-  -fx-border-color: rgba(148, 163, 184, 0.34) rgba(148, 163, 184, 0.34) rgba(148, 163, 184, 0.34) transparent;
+  -fx-border-color: rgba(203, 213, 225, 0.24) rgba(203, 213, 225, 0.24) rgba(203, 213, 225, 0.24) transparent;
   -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.22), 8, 0.18, 0, 1);
 }
 
 .theme-dark .note-sidebar-toggle-button:hover {
   -fx-background-color: rgba(30, 41, 59, 0.98);
-  -fx-border-color: rgba(203, 213, 225, 0.42) rgba(203, 213, 225, 0.42) rgba(203, 213, 225, 0.42) transparent;
+  -fx-border-color: rgba(203, 213, 225, 0.3) rgba(203, 213, 225, 0.3) rgba(203, 213, 225, 0.3) transparent;
 }
 
 .theme-dark .note-sidebar-toggle-icon {
