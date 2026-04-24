@@ -15,8 +15,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.util.Duration;
 
 public class NoteToolbarController {
-  static final double ROOT_WIDTH = 78.0;
-  static final double HANDLE_WIDTH = 22.0;
+  static final double ROOT_WIDTH = 74.0;
+  static final double HANDLE_WIDTH = 18.0;
   static final double PANEL_WIDTH = ROOT_WIDTH - HANDLE_WIDTH;
   static final double COLLAPSED_ROOT_TRANSLATE = -(ROOT_WIDTH - HANDLE_WIDTH);
   static final double COLLAPSED_TOOL_TRANSLATE = -12.0;
@@ -79,6 +79,11 @@ public class NoteToolbarController {
     note.typeProperty().addListener((obs, oldValue, newValue) ->
         updateVisibility(newValue == NoteType.TEXT));
     applyCollapsedState(true);
+  }
+
+  public void setToolbarVisible(boolean visible) {
+    root.setVisible(visible);
+    root.setManaged(visible);
   }
 
   public void setSidebarStateListener(Consumer<Boolean> sidebarStateListener) {
@@ -163,6 +168,10 @@ public class NoteToolbarController {
 
   public VBox getToolRail() {
     return toolRail;
+  }
+
+  public boolean isCollapsed() {
+    return collapsed;
   }
 
   private void updateToggleIcon(boolean collapsed) {

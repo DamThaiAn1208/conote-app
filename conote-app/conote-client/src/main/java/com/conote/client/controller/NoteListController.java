@@ -33,6 +33,7 @@ public class NoteListController {
   private VBox listRoot;
 
   private final Map<String, Parent> noteCardsById = new LinkedHashMap<>();
+  private final Map<String, NoteCardController> noteCardControllersById = new LinkedHashMap<>();
   private final Rectangle hostClip = new Rectangle();
   private CoNoteStore store;
   private MainWindowController mainController;
@@ -52,6 +53,14 @@ public class NoteListController {
       return null;
     }
     return noteCardsById.get(noteId);
+  }
+
+  public void flushPendingEdits() {
+    for (NoteCardController controller : noteCardControllersById.values()) {
+      if (controller != null) {
+        controller.flushPendingChanges();
+      }
+    }
   }
 
   private void configureStableListWidth() {
@@ -110,6 +119,7 @@ public class NoteListController {
         view.controller().setContext(note, store, mainController);
         card = view.root();
         noteCardsById.put(note.getId(), card);
+        noteCardControllersById.put(note.getId(), view.controller());
       }
       if (card instanceof Region region) {
         region.setMaxWidth(Double.MAX_VALUE);
@@ -118,6 +128,7 @@ public class NoteListController {
     }
 
     noteCardsById.entrySet().removeIf(entry -> !visibleIds.contains(entry.getKey()));
+    noteCardControllersById.entrySet().removeIf(entry -> !visibleIds.contains(entry.getKey()));
     listRoot.getChildren().setAll(orderedCards);
     Platform.runLater(this::updateLayoutBounds);
   }

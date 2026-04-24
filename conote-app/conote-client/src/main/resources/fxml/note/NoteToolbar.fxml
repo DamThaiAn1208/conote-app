@@ -15,10 +15,10 @@
            xmlns:fx="http://javafx.com/fxml/1"
            alignment="BOTTOM_LEFT"
            maxHeight="1.7976931348623157E308"
-           maxWidth="78.0"
-           minWidth="78.0"
+           maxWidth="74.0"
+           minWidth="74.0"
            pickOnBounds="false"
-           prefWidth="78.0"
+           prefWidth="74.0"
             styleClass="note-toolbar-shell">
   <children>
     <AnchorPane pickOnBounds="false" StackPane.alignment="TOP_LEFT">

@@ -34,6 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
 public class MainWindowController {
   @FXML
@@ -77,6 +78,7 @@ public class MainWindowController {
 
   private final CoNoteStore store = new CoNoteStore();
   private final Map<String, Stage> openWindows = new HashMap<>();
+  private final Map<String, NoteWindowController> openWindowControllers = new HashMap<>();
   private final GaussianBlur overlayBlur = new GaussianBlur(14);
   private final Rectangle overlayClip = new Rectangle();
 
@@ -136,6 +138,7 @@ public class MainWindowController {
       return;
     }
 
+    stage.addEventHandler(WindowEvent.WINDOW_HIDING, event -> flushPendingChanges());
     stage.widthProperty().addListener((obs, oldValue, newValue) ->
         store.updateWindowSize(newValue.doubleValue(), stage.getHeight()));
     stage.heightProperty().addListener((obs, oldValue, newValue) ->
@@ -146,6 +149,8 @@ public class MainWindowController {
     if (note == null) {
       return;
     }
+
+    flushPendingChanges();
 
     Stage existing = openWindows.get(note.getId());
     if (existing != null) {
@@ -170,10 +175,14 @@ public class MainWindowController {
     stage.setTitle("");
     stage.setMinWidth(740);
     stage.setMinHeight(540);
-    stage.setOnHidden(event -> openWindows.remove(note.getId()));
+    stage.setOnHidden(event -> {
+      openWindows.remove(note.getId());
+      openWindowControllers.remove(note.getId());
+    });
 
     view.controller().setContext(note, store, stage);
     openWindows.put(note.getId(), stage);
+    openWindowControllers.put(note.getId(), view.controller());
     stage.show();
     stage.toFront();
     stage.requestFocus();
@@ -184,6 +193,7 @@ public class MainWindowController {
       return;
     }
     Stage stage = openWindows.remove(note.getId());
+    openWindowControllers.remove(note.getId());
     if (stage != null) {
       stage.close();
     }
@@ -214,6 +224,17 @@ public class MainWindowController {
 
   public CoNoteStore getStore() {
     return store;
+  }
+
+  public void flushPendingChanges() {
+    if (noteListController != null) {
+      noteListController.flushPendingEdits();
+    }
+    for (NoteWindowController controller : new ArrayList<>(openWindowControllers.values())) {
+      if (controller != null) {
+        controller.flushPendingEdits();
+      }
+    }
   }
 
   public Parent findNoteCard(String noteId) {

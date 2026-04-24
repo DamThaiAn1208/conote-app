@@ -16,10 +16,10 @@
            fx:id="root"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
-           minHeight="420.0"
-           minWidth="640.0"
-           prefHeight="620.0"
-           prefWidth="900.0"
+           minHeight="520.0"
+           minWidth="620.0"
+           prefHeight="760.0"
+           prefWidth="780.0"
            styleClass="note-window-root">
   <children>
     <StackPane fx:id="windowFrame">
@@ -81,9 +81,9 @@
                       VBox.vgrow="ALWAYS">
                   <children>
                     <AnchorPane fx:id="noteSidebarSpace"
-                                maxWidth="22.0"
-                                minWidth="22.0"
-                                prefWidth="22.0">
+                                maxWidth="18.0"
+                                minWidth="18.0"
+                                prefWidth="18.0">
                       <children>
                         <fx:include fx:id="noteToolbar"
                                     source="NoteToolbar.fxml"

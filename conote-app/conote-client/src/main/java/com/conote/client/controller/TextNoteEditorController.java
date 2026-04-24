@@ -145,6 +145,10 @@ public class TextNoteEditorController {
     root.setManaged(visible);
   }
 
+  public void flushPendingContent() {
+    flushEditorContent();
+  }
+
   public void setFormattingStateListener(Consumer<FormattingState> formattingStateListener) {
     this.formattingStateListener = formattingStateListener == null ? state -> {
     } : formattingStateListener;
