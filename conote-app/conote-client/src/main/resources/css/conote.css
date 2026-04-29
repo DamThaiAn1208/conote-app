@@ -477,30 +477,45 @@
 }
 
 .filter-panel {
+  -fx-background-color: linear-gradient(to bottom right, rgba(255, 251, 235, 0.98), rgba(248, 250, 252, 0.98));
+  -fx-border-color: rgba(252, 186, 3, 0.38);
+  -fx-effect: dropshadow(gaussian, rgba(120, 82, 8, 0.13), 18, 0.18, 0, 5);
   -fx-padding: 16px;
 }
 
 .filter-panel-header {
-  -fx-padding: 0 0 2px 0;
+  -fx-padding: 0 0 6px 0;
+  -fx-border-color: transparent transparent rgba(252, 186, 3, 0.22) transparent;
+  -fx-border-width: 0 0 1px 0;
 }
 
 .filter-panel-title {
-  -fx-text-fill: #0f172a;
-  -fx-font-size: 12px;
+  -fx-text-fill: #7c4a03;
+  -fx-font-size: 13px;
   -fx-font-weight: 800;
 }
 
 .filter-combo {
-  -fx-background-color: white;
-  -fx-border-color: #d7dee8;
+  -fx-background-color: rgba(255, 255, 255, 0.92);
+  -fx-border-color: rgba(252, 186, 3, 0.34);
   -fx-border-radius: 12px;
   -fx-background-radius: 12px;
   -fx-font-size: 12px;
   -fx-padding: 4px 6px;
+  -fx-effect: dropshadow(gaussian, rgba(120, 82, 8, 0.07), 8, 0.12, 0, 1);
+}
+
+.filter-combo:hover {
+  -fx-border-color: rgba(252, 186, 3, 0.58);
+}
+
+.filter-combo:focused {
+  -fx-border-color: rgba(217, 119, 6, 0.72);
+  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.2), 10, 0.18, 0, 0);
 }
 
 .section-kicker {
-  -fx-text-fill: #64748b;
+  -fx-text-fill: #9a5f00;
   -fx-font-size: 10px;
   -fx-font-weight: 800;
 }
@@ -515,6 +530,12 @@
   -fx-border-color: #cbd5e1;
   -fx-border-width: 1px;
   -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.1), 5, 0.14, 0, 1);
+}
+
+.color-filter-swatch:hover {
+  -fx-border-color: #f59e0b;
+  -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.24), 8, 0.18, 0, 1);
 }
 
 .swatch-default {
@@ -546,27 +567,34 @@
 }
 
 .swatch-selected {
-  -fx-border-color: #0f172a;
+  -fx-border-color: #7c4a03;
   -fx-border-width: 2px;
+  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.32), 9, 0.22, 0, 1);
 }
 
 .filter-chip,
 .tag-chip {
-  -fx-background-color: white;
-  -fx-border-color: #d7dee8;
+  -fx-background-color: rgba(255, 255, 255, 0.86);
+  -fx-border-color: rgba(252, 186, 3, 0.26);
   -fx-border-radius: 10px;
   -fx-background-radius: 10px;
   -fx-padding: 6px 10px;
-  -fx-text-fill: #475569;
+  -fx-text-fill: #6b4b12;
   -fx-font-size: 11px;
   -fx-font-weight: 700;
   -fx-cursor: hand;
 }
 
+.filter-chip:hover,
+.tag-chip:hover {
+  -fx-background-color: rgba(255, 248, 222, 0.94);
+  -fx-border-color: rgba(252, 186, 3, 0.5);
+}
+
 .filter-chip-active,
 .tag-chip-accent {
-  -fx-background-color: rgba(252, 186, 3, 0.14);
-  -fx-border-color: rgba(252, 186, 3, 0.4);
+  -fx-background-color: rgba(252, 186, 3, 0.2);
+  -fx-border-color: rgba(217, 119, 6, 0.54);
 }
 
 .tag-chip-label {
@@ -820,6 +848,20 @@
 
 .note-card:hover {
   -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 10, 0.12, 0, 4);
+}
+
+.note-card-dragging {
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.16), 18, 0.18, 0, 8);
+}
+
+.note-card-drop-before {
+  -fx-border-color: #fcba03 #e2e8f0 #e2e8f0 #e2e8f0;
+  -fx-border-width: 3px 1px 1px 1px;
+}
+
+.note-card-drop-after {
+  -fx-border-color: #e2e8f0 #e2e8f0 #fcba03 #e2e8f0;
+  -fx-border-width: 1px 1px 3px 1px;
 }
 
 .note-card-selected {
@@ -1595,11 +1637,20 @@
 }
 
 .filter-clear-button {
+  -fx-background-color: rgba(255, 248, 222, 0.94);
+  -fx-border-color: rgba(252, 186, 3, 0.42);
+  -fx-text-fill: #7c4a03;
   -fx-padding: 6px 11px;
   -fx-font-size: 11px;
   -fx-font-weight: 800;
   -fx-border-radius: 999px;
   -fx-background-radius: 999px;
+}
+
+.filter-clear-button:hover {
+  -fx-background-color: rgba(252, 186, 3, 0.18);
+  -fx-border-color: rgba(217, 119, 6, 0.58);
+  -fx-text-fill: #78350f;
 }
 
 .danger-solid-button {
@@ -1950,6 +2001,14 @@
 
 .theme-dark .note-card {
   -fx-border-color: rgba(148, 163, 184, 0.24);
+}
+
+.theme-dark .note-card-drop-before {
+  -fx-border-color: #fcba03 rgba(148, 163, 184, 0.24) rgba(148, 163, 184, 0.24) rgba(148, 163, 184, 0.24);
+}
+
+.theme-dark .note-card-drop-after {
+  -fx-border-color: rgba(148, 163, 184, 0.24) rgba(148, 163, 184, 0.24) #fcba03 rgba(148, 163, 184, 0.24);
 }
 
 .theme-dark .note-card-selected {

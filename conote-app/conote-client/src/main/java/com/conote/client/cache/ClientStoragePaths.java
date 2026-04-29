@@ -11,6 +11,7 @@ public final class ClientStoragePaths {
   private static final String APP_DIRECTORY_NAME = "CoNote";
   private static final String FALLBACK_DIRECTORY_NAME = ".conote";
   private static final String NOTE_CACHE_FILE_NAME = "noteCache.json";
+  private static final String NOTE_ORDER_CACHE_FILE_NAME = "noteOrderCache.json";
   private static final String UI_STATE_FILE_NAME = "uiState.json";
   private static final String SYNC_QUEUE_FILE_NAME = "syncQueue.json";
 
@@ -19,6 +20,7 @@ public final class ClientStoragePaths {
   private static Path cacheDir;
   private static Path pendingDir;
   private static Path noteCacheFile;
+  private static Path noteOrderCacheFile;
   private static Path uiStateFile;
   private static Path syncQueueFile;
 
@@ -34,6 +36,7 @@ public final class ClientStoragePaths {
     cacheDir = appDir.resolve("cache");
     pendingDir = appDir.resolve("pending");
     noteCacheFile = cacheDir.resolve(NOTE_CACHE_FILE_NAME);
+    noteOrderCacheFile = cacheDir.resolve(NOTE_ORDER_CACHE_FILE_NAME);
     uiStateFile = cacheDir.resolve(UI_STATE_FILE_NAME);
     syncQueueFile = pendingDir.resolve(SYNC_QUEUE_FILE_NAME);
 
@@ -41,6 +44,7 @@ public final class ClientStoragePaths {
       Files.createDirectories(cacheDir);
       Files.createDirectories(pendingDir);
       ensureFile(noteCacheFile, "[]");
+      ensureFile(noteOrderCacheFile, "[]");
       ensureFile(syncQueueFile, "[]");
       ensureFile(uiStateFile, "{}");
     } catch (IOException exception) {
@@ -56,6 +60,7 @@ public final class ClientStoragePaths {
     cacheDir = null;
     pendingDir = null;
     noteCacheFile = null;
+    noteOrderCacheFile = null;
     uiStateFile = null;
     syncQueueFile = null;
   }
@@ -78,6 +83,11 @@ public final class ClientStoragePaths {
   public static Path noteCacheFile() {
     init();
     return noteCacheFile;
+  }
+
+  public static Path noteOrderCacheFile() {
+    init();
+    return noteOrderCacheFile;
   }
 
   public static Path uiStateFile() {

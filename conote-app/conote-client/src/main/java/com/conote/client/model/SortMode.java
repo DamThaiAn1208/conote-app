@@ -1,6 +1,7 @@
 package com.conote.client.model;
 
 public enum SortMode {
+  MANUAL("Custom order"),
   NEWEST("Newest first"),
   OLDEST("Oldest first");
 

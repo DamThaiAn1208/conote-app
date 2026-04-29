@@ -4,6 +4,8 @@ import com.conote.client.cache.ChecklistContentCodec;
 import com.conote.client.cache.ClientStoragePaths;
 import com.conote.client.cache.JsonStore;
 import com.conote.client.cache.NoteCacheStore;
+import com.conote.client.cache.NoteOrderCacheStore;
+import com.conote.client.cache.NoteOrderEntry;
 import com.conote.client.cache.PendingSyncItem;
 import com.conote.client.cache.SyncActionType;
 import com.conote.client.cache.SyncQueueStore;
@@ -52,6 +54,8 @@ public class CoNoteStore {
   private static final double DEFAULT_WINDOW_HEIGHT = 760.0;
   private static final String DEFAULT_LOCAL_USER_NAME = "CoNote Local User";
   private static final String DEFAULT_LOCAL_USER_EMAIL = "local@conote.app";
+  private static final String DEFAULT_LOCAL_USER_KEY = DEFAULT_LOCAL_USER_EMAIL;
+  private static final long NOTE_ORDER_GAP = 1000L;
 
   private final ObservableList<NoteModel> notes =
       FXCollections.observableArrayList(note -> note.extractor());
@@ -67,9 +71,11 @@ public class CoNoteStore {
 
   private final JsonStore jsonStore;
   private final NoteCacheStore noteCacheStore;
+  private final NoteOrderCacheStore noteOrderCacheStore;
   private final UiStateStore uiStateStore;
   private final SyncQueueStore syncQueueStore;
   private final Map<String, Note> noteEntitiesById = new LinkedHashMap<>();
+  private final Map<String, Long> sortOrderByNoteId = new LinkedHashMap<>();
 
   private UiState uiState;
 
@@ -77,6 +83,7 @@ public class CoNoteStore {
     ClientStoragePaths.init();
     jsonStore = new JsonStore();
     noteCacheStore = new NoteCacheStore(jsonStore);
+    noteOrderCacheStore = new NoteOrderCacheStore(jsonStore);
     uiStateStore = new UiStateStore(jsonStore);
     syncQueueStore = new SyncQueueStore(jsonStore);
 
@@ -124,12 +131,19 @@ public class CoNoteStore {
   private void loadNotesFromLocalCache() {
     loading.set(true);
     noteEntitiesById.clear();
+    sortOrderByNoteId.clear();
+    sortOrderByNoteId.putAll(noteOrderCacheStore.findOrderByNoteId(currentUserKey()));
+
+    List<Note> activeNotes = new ArrayList<>();
+    for (Note note : noteCacheStore.findAll()) {
+      if (note != null && !Boolean.TRUE.equals(note.getDeleted())) {
+        activeNotes.add(note);
+      }
+    }
+    ensureSortOrders(activeNotes);
 
     List<NoteModel> loadedModels = new ArrayList<>();
-    for (Note note : noteCacheStore.findAll()) {
-      if (note == null || Boolean.TRUE.equals(note.getDeleted())) {
-        continue;
-      }
+    for (Note note : activeNotes) {
       noteEntitiesById.put(note.getNoteId(), note);
       loadedModels.add(toNoteModel(note));
     }
@@ -175,6 +189,14 @@ public class CoNoteStore {
   }
 
   private Comparator<NoteModel> createComparator(SortMode mode) {
+    if (mode == SortMode.MANUAL) {
+      return Comparator
+          .comparing(NoteModel::isPinned, Comparator.reverseOrder())
+          .thenComparingLong(NoteModel::getSortOrder)
+          .thenComparing(Comparator.comparingLong(NoteModel::getCreatedAt).reversed())
+          .thenComparing(NoteModel::getId);
+    }
+
     Comparator<NoteModel> byCreatedAt = Comparator.comparingLong(NoteModel::getCreatedAt);
     if (mode == SortMode.NEWEST) {
       byCreatedAt = byCreatedAt.reversed();
@@ -206,11 +228,13 @@ public class CoNoteStore {
 
     Note saved = noteCacheStore.save(note);
     noteEntitiesById.put(saved.getNoteId(), saved);
+    sortOrderByNoteId.put(saved.getNoteId(), nextSortOrderForCreatedNote());
 
     NoteModel model = toNoteModel(saved);
     insertCreatedNote(model);
     expandedNoteId.set(model.getId());
     enqueueSync(saved, SyncActionType.CREATE_NOTE);
+    persistNoteOrdersAndEnqueue();
     return model;
   }
 
@@ -224,12 +248,57 @@ public class CoNoteStore {
 
     notes.remove(note);
     noteEntitiesById.remove(note.getId());
+    sortOrderByNoteId.remove(note.getId());
     noteCacheStore.deleteById(note.getId());
+    noteOrderCacheStore.deleteForNote(currentUserKey(), note.getId());
     if (note.getId().equals(expandedNoteId.get())) {
       expandedNoteId.set(null);
     }
 
     enqueueSync(deletedSnapshot, SyncActionType.DELETE_NOTE);
+  }
+
+  public boolean moveVisibleNote(String draggedNoteId, String targetNoteId, boolean placeAfterTarget) {
+    if (draggedNoteId == null
+        || targetNoteId == null
+        || draggedNoteId.equals(targetNoteId)
+        || loading.get()) {
+      return false;
+    }
+
+    NoteModel draggedNote = findNoteById(draggedNoteId);
+    NoteModel targetNote = findNoteById(targetNoteId);
+    if (draggedNote == null
+        || targetNote == null
+        || !visibleNotes.contains(draggedNote)
+        || !visibleNotes.contains(targetNote)) {
+      return false;
+    }
+
+    if (sortMode.get() != SortMode.MANUAL) {
+      reindexSortOrdersFromNotes();
+    }
+
+    List<NoteModel> reordered = new ArrayList<>(notes);
+    if (!reordered.remove(draggedNote)) {
+      return false;
+    }
+
+    int targetIndex = reordered.indexOf(targetNote);
+    if (targetIndex < 0) {
+      return false;
+    }
+    if (placeAfterTarget) {
+      targetIndex++;
+    }
+
+    reordered.add(Math.min(targetIndex, reordered.size()), draggedNote);
+    notes.setAll(reordered);
+    reindexSortOrdersFromNotes();
+    persistNoteOrdersAndEnqueue();
+    setSortMode(SortMode.MANUAL);
+    refreshFilters();
+    return true;
   }
 
   public void refreshFilters() {
@@ -333,6 +402,10 @@ public class CoNoteStore {
           note,
           note.isPinned() ? SyncActionType.PIN_NOTE : SyncActionType.UNPIN_NOTE,
           true);
+      if (sortMode.get() == SortMode.MANUAL) {
+        reindexSortOrdersFromNotes();
+        persistNoteOrdersAndEnqueue();
+      }
     }
   }
 
@@ -555,7 +628,8 @@ public class CoNoteStore {
         resolveNoteColor(note.getColor()),
         Boolean.TRUE.equals(note.getPinned()),
         toEpochMillis(note.getCreatedAt()),
-        toEpochMillis(note.getUpdatedAt()));
+        toEpochMillis(note.getUpdatedAt()),
+        sortOrderByNoteId.getOrDefault(note.getNoteId(), 0L));
 
     if (type == NoteType.CHECKLIST) {
       List<ChecklistItemModel> items = new ArrayList<>(ChecklistContentCodec.decode(note.getContent()));
@@ -579,8 +653,8 @@ public class CoNoteStore {
       return;
     }
 
-    int targetIndex = sortMode.get() == SortMode.NEWEST ? firstUnpinnedIndex() : notes.size();
-    notes.add(targetIndex, note);
+    notes.add(note);
+    applySortModeOrdering(sortMode.get());
   }
 
   private void moveNoteForPinState(NoteModel note) {
@@ -592,6 +666,100 @@ public class CoNoteStore {
     notes.remove(currentIndex);
     int targetIndex = note.isPinned() ? 0 : firstUnpinnedIndex();
     notes.add(targetIndex, note);
+  }
+
+  private void ensureSortOrders(List<Note> activeNotes) {
+    Set<String> activeIds = new LinkedHashSet<>();
+    for (Note note : activeNotes) {
+      if (note.getNoteId() != null && !note.getNoteId().isBlank()) {
+        activeIds.add(note.getNoteId());
+      }
+    }
+
+    boolean changed = sortOrderByNoteId.keySet().removeIf(noteId -> !activeIds.contains(noteId));
+    List<Note> missingOrderNotes = activeNotes.stream()
+        .filter(note -> note.getNoteId() != null && !note.getNoteId().isBlank())
+        .filter(note -> !sortOrderByNoteId.containsKey(note.getNoteId()))
+        .sorted(createDefaultNoteOrderComparator())
+        .toList();
+
+    long nextSortOrder = maxSortOrder() + NOTE_ORDER_GAP;
+    for (Note note : missingOrderNotes) {
+      sortOrderByNoteId.put(note.getNoteId(), nextSortOrder);
+      nextSortOrder += NOTE_ORDER_GAP;
+      changed = true;
+    }
+
+    if (changed) {
+      persistNoteOrdersToCache();
+    }
+  }
+
+  private Comparator<Note> createDefaultNoteOrderComparator() {
+    return Comparator
+        .comparing((Note note) -> Boolean.TRUE.equals(note.getPinned()), Comparator.reverseOrder())
+        .thenComparing(Comparator.comparingLong((Note note) -> toEpochMillis(note.getCreatedAt())).reversed())
+        .thenComparing(note -> note.getNoteId() == null ? "" : note.getNoteId());
+  }
+
+  private long maxSortOrder() {
+    return sortOrderByNoteId.values().stream()
+        .mapToLong(Long::longValue)
+        .max()
+        .orElse(0L);
+  }
+
+  private long nextSortOrderForCreatedNote() {
+    return sortOrderByNoteId.values().stream()
+        .mapToLong(Long::longValue)
+        .min()
+        .orElse(NOTE_ORDER_GAP) - NOTE_ORDER_GAP;
+  }
+
+  private void reindexSortOrdersFromNotes() {
+    sortOrderByNoteId.clear();
+    long nextSortOrder = NOTE_ORDER_GAP;
+    for (NoteModel note : notes) {
+      if (note == null || note.getId() == null || note.getId().isBlank()) {
+        continue;
+      }
+      sortOrderByNoteId.put(note.getId(), nextSortOrder);
+      note.setSortOrder(nextSortOrder);
+      nextSortOrder += NOTE_ORDER_GAP;
+    }
+  }
+
+  private void persistNoteOrdersToCache() {
+    noteOrderCacheStore.saveForUser(currentUserKey(), sortOrderByNoteId);
+  }
+
+  private void persistNoteOrdersAndEnqueue() {
+    List<NoteOrderEntry> savedEntries = noteOrderCacheStore.saveForUser(currentUserKey(), sortOrderByNoteId);
+    syncQueueStore.add(new PendingSyncItem(
+        null,
+        SyncActionType.REORDER_NOTES,
+        currentUserKey(),
+        jsonStore.toJson(savedEntries),
+        0,
+        null,
+        null));
+  }
+
+  private NoteModel findNoteById(String noteId) {
+    if (noteId == null || noteId.isBlank()) {
+      return null;
+    }
+
+    for (NoteModel note : notes) {
+      if (noteId.equals(note.getId())) {
+        return note;
+      }
+    }
+    return null;
+  }
+
+  private String currentUserKey() {
+    return DEFAULT_LOCAL_USER_KEY;
   }
 
   private int firstUnpinnedIndex() {
