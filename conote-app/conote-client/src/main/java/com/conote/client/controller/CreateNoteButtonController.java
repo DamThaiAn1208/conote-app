@@ -1,5 +1,7 @@
 package com.conote.client.controller;
 
+import com.conote.client.app.ClientApplication;
+import com.conote.client.model.AppTheme;
 import com.conote.common.enums.NoteType;
 import com.conote.client.model.NoteModel;
 import com.conote.client.service.CoNoteStore;
@@ -10,15 +12,24 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import java.util.function.Consumer;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Rectangle;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class CreateNoteButtonController {
   private static final Duration MENU_ANIMATION = Duration.millis(175);
-  private static final double MENU_CORNER_RADIUS = 10.0;
+  private static final double POPUP_GAP = 0.0;
+  private static final double POPUP_X_OFFSET = -2.0;
+  private static final double POPUP_Y_OFFSET = -24.0;
+
+  @FXML
+  private VBox root;
 
   @FXML
   private VBox menu;
@@ -33,16 +44,15 @@ public class CreateNoteButtonController {
   private HBox checklistNoteRow;
 
   @FXML
-  private Button textNoteButton;
+  private StackPane textNoteButton;
 
   @FXML
-  private Button checklistNoteButton;
+  private StackPane checklistNoteButton;
 
-  private final Rectangle menuClip = new Rectangle();
   private CoNoteStore store;
   private Consumer<NoteModel> onNoteCreated;
   private Timeline menuTimeline;
-  private boolean menuShown;
+  private Popup menuPopup;
 
   @FXML
   private void initialize() {
@@ -55,12 +65,13 @@ public class CreateNoteButtonController {
     checklistNoteRow.setPickOnBounds(true);
     textNoteRow.setOnMouseClicked(event -> createTextNote());
     checklistNoteRow.setOnMouseClicked(event -> createChecklistNote());
-    menuClip.widthProperty().bind(menu.widthProperty());
-    menuClip.heightProperty().bind(menu.maxHeightProperty());
-    menuClip.setArcWidth(MENU_CORNER_RADIUS * 2.0);
-    menuClip.setArcHeight(MENU_CORNER_RADIUS * 2.0);
-    menu.setClip(menuClip);
-    applyMenuState(false, false);
+    root.getChildren().remove(menu);
+    menu.setVisible(false);
+    menu.setManaged(false);
+    menu.setLayoutX(0.0);
+    menu.setLayoutY(0.0);
+    menu.getStylesheets().add(ClientApplication.stylesheetUrl());
+    initializePopup();
   }
 
   public void setContext(CoNoteStore store, Consumer<NoteModel> onNoteCreated) {
@@ -69,11 +80,13 @@ public class CreateNoteButtonController {
     menu.prefWidthProperty().bind(primaryButton.widthProperty());
     menu.minWidthProperty().bind(primaryButton.widthProperty());
     menu.maxWidthProperty().bind(primaryButton.widthProperty());
+    store.themeProperty().addListener((obs, oldValue, newValue) -> applyTheme(newValue));
+    applyTheme(store.getTheme());
   }
 
   @FXML
   private void toggleMenu() {
-    setMenuVisible(!menu.isVisible());
+    setMenuVisible(!isMenuShowing());
   }
 
   @FXML
@@ -91,7 +104,11 @@ public class CreateNoteButtonController {
   }
 
   private void setMenuVisible(boolean visible) {
-    applyMenuState(visible, true);
+    if (visible) {
+      showMenu();
+    } else {
+      hideMenu();
+    }
   }
 
   private void openCreatedNote(NoteModel note) {
@@ -100,75 +117,88 @@ public class CreateNoteButtonController {
     }
   }
 
-  private void applyMenuState(boolean visible, boolean animate) {
-    if (menuShown == visible && menu.isVisible() == visible) {
+  private void initializePopup() {
+    menuPopup = new Popup();
+    menuPopup.setAutoFix(true);
+    menuPopup.setAutoHide(true);
+    menuPopup.setHideOnEscape(true);
+    menuPopup.getContent().setAll(menu);
+    menuPopup.setOnHidden(event -> {
+      stopMenuAnimation();
+      menu.setVisible(false);
+      menu.setManaged(false);
+    });
+  }
+
+  private void showMenu() {
+    Stage stage = stageFor(primaryButton);
+    if (stage == null || menuPopup == null) {
       return;
     }
 
-    menuShown = visible;
+    stopMenuAnimation();
+    menu.setVisible(true);
+    menu.setManaged(true);
+    menu.setMouseTransparent(false);
+    menu.relocate(0.0, 0.0);
+    menu.setMaxHeight(Region.USE_COMPUTED_SIZE);
+    menu.applyCss();
+    menu.layout();
+
+    double popupX = computePopupX();
+    double popupY = computePopupY();
+    if (menuPopup.isShowing()) {
+      menuPopup.setX(popupX);
+      menuPopup.setY(popupY);
+      return;
+    }
+
+    menu.setOpacity(0.0);
+    menu.setTranslateY(-4.0);
+    menuPopup.show(stage, popupX, popupY);
+    menuTimeline = new Timeline(
+        new KeyFrame(
+            MENU_ANIMATION,
+            new KeyValue(menu.opacityProperty(), 1.0, Interpolator.EASE_BOTH),
+            new KeyValue(menu.translateYProperty(), 0.0, Interpolator.EASE_BOTH)));
+    menuTimeline.setOnFinished(event -> menuTimeline = null);
+    menuTimeline.playFromStart();
+  }
+
+  private void hideMenu() {
+    stopMenuAnimation();
+    if (menuPopup != null) {
+      menuPopup.hide();
+    }
+  }
+
+  private void stopMenuAnimation() {
     if (menuTimeline != null) {
       menuTimeline.stop();
       menuTimeline = null;
     }
-
-    if (!animate) {
-      menu.setVisible(visible);
-      menu.setManaged(visible);
-      menu.setMouseTransparent(!visible);
-      menu.setOpacity(visible ? 1.0 : 0.0);
-      menu.setTranslateY(visible ? 0.0 : -8.0);
-      menu.setMaxHeight(visible ? measureMenuHeight() : 0.0);
-      return;
-    }
-
-    double currentHeight = Math.max(menu.getMaxHeight(), 0.0);
-    if (visible) {
-      menu.setManaged(true);
-      menu.setVisible(true);
-      menu.setMouseTransparent(false);
-      double targetHeight = measureMenuHeight();
-      menu.setOpacity(0.0);
-      menu.setTranslateY(-8.0);
-      menu.setMaxHeight(currentHeight > 0.0 ? currentHeight : 0.0);
-      menuTimeline = new Timeline(
-          new KeyFrame(
-              MENU_ANIMATION,
-              new KeyValue(menu.maxHeightProperty(), targetHeight, Interpolator.EASE_BOTH),
-              new KeyValue(menu.opacityProperty(), 1.0, Interpolator.EASE_BOTH),
-              new KeyValue(menu.translateYProperty(), 0.0, Interpolator.EASE_BOTH)));
-      menuTimeline.setOnFinished(event -> {
-        menu.setMaxHeight(measureMenuHeight());
-        menuTimeline = null;
-      });
-      menuTimeline.playFromStart();
-      return;
-    }
-
-    double startHeight = currentHeight > 0.0 ? currentHeight : measureMenuHeight();
-    menu.setMouseTransparent(true);
-    menu.setMaxHeight(startHeight);
-    menuTimeline = new Timeline(
-        new KeyFrame(
-            MENU_ANIMATION,
-            new KeyValue(menu.maxHeightProperty(), 0.0, Interpolator.EASE_BOTH),
-            new KeyValue(menu.opacityProperty(), 0.0, Interpolator.EASE_BOTH),
-            new KeyValue(menu.translateYProperty(), -8.0, Interpolator.EASE_BOTH)));
-    menuTimeline.setOnFinished(event -> {
-      menu.setVisible(false);
-      menu.setManaged(false);
-      menuTimeline = null;
-    });
-    menuTimeline.playFromStart();
   }
 
-  private double measureMenuHeight() {
-    menu.applyCss();
-    menu.layout();
-    double width = primaryButton.getWidth() > 0 ? primaryButton.getWidth() : -1;
-    double targetHeight = menu.prefHeight(width);
-    if (Double.isNaN(targetHeight) || targetHeight <= 0.0) {
-      targetHeight = menu.prefHeight(-1);
-    }
-    return Math.max(targetHeight, 0.0);
+  private boolean isMenuShowing() {
+    return menuPopup != null && menuPopup.isShowing();
+  }
+
+  private Stage stageFor(Node node) {
+    return node.getScene() == null ? null : (Stage) node.getScene().getWindow();
+  }
+
+  private double computePopupX() {
+    Bounds buttonBounds = primaryButton.localToScreen(primaryButton.getBoundsInLocal());
+    return buttonBounds == null ? 0.0 : buttonBounds.getMinX() + POPUP_X_OFFSET;
+  }
+
+  private double computePopupY() {
+    Bounds buttonBounds = primaryButton.localToScreen(primaryButton.getBoundsInLocal());
+    return buttonBounds == null ? 0.0 : buttonBounds.getMaxY() + POPUP_GAP + POPUP_Y_OFFSET;
+  }
+
+  private void applyTheme(AppTheme theme) {
+    menu.getStyleClass().removeAll(AppTheme.LIGHT.cssClass(), AppTheme.DARK.cssClass());
+    menu.getStyleClass().add(theme == null ? AppTheme.LIGHT.cssClass() : theme.cssClass());
   }
 }

@@ -480,19 +480,11 @@
   -fx-background-color: linear-gradient(to bottom right, rgba(255, 251, 235, 0.98), rgba(248, 250, 252, 0.98));
   -fx-border-color: rgba(252, 186, 3, 0.38);
   -fx-effect: dropshadow(gaussian, rgba(120, 82, 8, 0.13), 18, 0.18, 0, 5);
-  -fx-padding: 16px;
+  -fx-padding: 14px 16px 12px 16px;
 }
 
-.filter-panel-header {
-  -fx-padding: 0 0 6px 0;
-  -fx-border-color: transparent transparent rgba(252, 186, 3, 0.22) transparent;
-  -fx-border-width: 0 0 1px 0;
-}
-
-.filter-panel-title {
-  -fx-text-fill: #7c4a03;
-  -fx-font-size: 13px;
-  -fx-font-weight: 800;
+.filter-panel-footer {
+  -fx-padding: 2px 0 0 0;
 }
 
 .filter-combo {
@@ -644,18 +636,20 @@
 .create-note-primary-button {
   -fx-max-width: Infinity;
   -fx-alignment: center;
-  -fx-background-color: linear-gradient(to bottom, #ffc619, #ffb703);
+  -fx-background-color: linear-gradient(to bottom, #ffd64d 0%, #ffc21a 48%, #ffb000 100%);
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
   -fx-min-height: 40px;
   -fx-pref-height: 40px;
   -fx-max-height: 40px;
   -fx-padding: 0 16px;
   -fx-background-radius: 10px;
   -fx-border-radius: 10px;
-  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.18), 10, 0.12, 0, 3);
+  -fx-effect: dropshadow(gaussian, rgba(252, 186, 3, 0.28), 12, 0.16, 0, 3);
 }
 
 .create-note-primary-button:hover {
-  -fx-background-color: linear-gradient(to bottom, #ffd54a, #ffbe12);
+  -fx-background-color: linear-gradient(to bottom, #ffe06b 0%, #ffcc2f 48%, #ffb812 100%);
 }
 
 .create-note-leading-icon {
@@ -678,10 +672,14 @@
 }
 
 .create-note-menu {
-  -fx-background-radius: 10px;
-  -fx-border-radius: 10px;
+  -fx-background-color: rgba(255, 255, 255, 0.985);
+  -fx-background-radius: 8px;
+  -fx-border-color: rgba(203, 213, 225, 0.95);
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
   -fx-background-insets: 0;
   -fx-border-insets: 0;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.16), 18, 0.18, 0, 5);
 }
 
 .create-menu-row {
@@ -691,12 +689,12 @@
 }
 
 .create-menu-row:hover {
-  -fx-background-color: rgba(214, 223, 236, 0.98);
+  -fx-background-color: rgba(248, 250, 252, 0.98);
   -fx-background-radius: 0;
 }
 
 .create-menu-row-first:hover {
-  -fx-background-radius: 10px 10px 0 0;
+  -fx-background-radius: 8px 8px 0 0;
 }
 
 .create-menu-row-last {
@@ -705,46 +703,63 @@
 }
 
 .create-menu-row-last:hover {
-  -fx-background-radius: 0 0 10px 10px;
+  -fx-background-radius: 0 0 8px 8px;
 }
 
 .create-menu-row-first.create-menu-row-last:hover {
-  -fx-background-radius: 10px;
+  -fx-background-radius: 8px;
 }
 
 .ghost-icon-pill {
   -fx-background-radius: 999px;
-  -fx-min-width: 32px;
-  -fx-min-height: 32px;
-  -fx-max-width: 32px;
-  -fx-max-height: 32px;
+  -fx-border-radius: 999px;
+  -fx-min-width: 30px;
+  -fx-min-height: 30px;
+  -fx-max-width: 30px;
+  -fx-max-height: 30px;
   -fx-font-weight: 800;
   -fx-content-display: graphic-only;
+  -fx-padding: 0;
+  -fx-border-width: 0;
 }
 
-.blue-pill {
-  -fx-background-color: #dbeafe;
-  -fx-text-fill: #2563eb;
+.icon-circle-blue {
+  -fx-background-color: #EAF2FF;
+  -fx-background-radius: 999px;
+  -fx-min-width: 40px;
+  -fx-min-height: 40px;
+  -fx-max-width: 40px;
+  -fx-max-height: 40px;
+  -fx-alignment: center;
 }
 
-.green-pill {
-  -fx-background-color: #dcfce7;
-  -fx-text-fill: #16a34a;
+.icon-circle-green {
+  -fx-background-color: #DFFBEA;
+  -fx-background-radius: 999px;
+  -fx-min-width: 40px;
+  -fx-min-height: 40px;
+  -fx-max-width: 40px;
+  -fx-max-height: 40px;
+  -fx-alignment: center;
 }
 
-.green-pill .pill-icon {
-  -fx-icon-color: #16a34a;
+.icon-blue {
+  -fx-icon-color: #3B82F6;
+}
+
+.icon-green {
+  -fx-icon-color: #10B981;
 }
 
 .create-menu-title {
   -fx-text-fill: #0f172a;
-  -fx-font-size: 13px;
+  -fx-font-size: 13.5px;
   -fx-font-weight: 700;
 }
 
 .create-menu-copy {
   -fx-text-fill: #64748b;
-  -fx-font-size: 11px;
+  -fx-font-size: 11.5px;
 }
 
 .note-list-scroll {
@@ -1640,7 +1655,7 @@
   -fx-background-color: rgba(255, 248, 222, 0.94);
   -fx-border-color: rgba(252, 186, 3, 0.42);
   -fx-text-fill: #7c4a03;
-  -fx-padding: 6px 11px;
+  -fx-padding: 5px 12px;
   -fx-font-size: 11px;
   -fx-font-weight: 800;
   -fx-border-radius: 999px;
@@ -2141,6 +2156,14 @@
 
 .theme-dark .green-pill .pill-icon {
   -fx-icon-color: #16a34a;
+}
+
+.theme-dark .text-note-pill .pill-icon {
+  -fx-icon-color: #3b82f6;
+}
+
+.theme-dark .checklist-note-pill .pill-icon {
+  -fx-icon-color: #10b981;
 }
 
 .theme-dark .brand-box-icon {

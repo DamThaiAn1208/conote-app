@@ -6,7 +6,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox fx:controller="com.conote.client.controller.FilterPanelController"
@@ -14,17 +13,33 @@
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       managed="false"
-      spacing="14.0"
+      spacing="11.0"
       visible="false">
   <styleClass>
     <String fx:value="surface-shell" />
     <String fx:value="filter-panel" />
   </styleClass>
   <children>
-    <HBox alignment="CENTER_LEFT" styleClass="filter-panel-header">
+    <VBox spacing="7.0">
       <children>
-        <Label styleClass="filter-panel-title" text="Filters" />
-        <Region HBox.hgrow="ALWAYS" />
+        <Label styleClass="section-kicker" text="SORT" />
+        <ComboBox fx:id="sortCombo" prefWidth="160.0" styleClass="filter-combo" />
+      </children>
+    </VBox>
+    <VBox spacing="7.0">
+      <children>
+        <Label styleClass="section-kicker" text="COLOR" />
+        <FlowPane fx:id="colorFlow" hgap="10.0" vgap="10.0" />
+      </children>
+    </VBox>
+    <VBox spacing="7.0">
+      <children>
+        <Label styleClass="section-kicker" text="TAGS" />
+        <FlowPane fx:id="tagFlow" hgap="8.0" vgap="8.0" />
+      </children>
+    </VBox>
+    <HBox alignment="CENTER_RIGHT" styleClass="filter-panel-footer">
+      <children>
         <Button fx:id="clearButton"
                 mnemonicParsing="false"
                 onAction="#clearFilters"
@@ -36,23 +51,5 @@
         </Button>
       </children>
     </HBox>
-    <VBox spacing="8.0">
-      <children>
-        <Label styleClass="section-kicker" text="SORT" />
-        <ComboBox fx:id="sortCombo" prefWidth="160.0" styleClass="filter-combo" />
-      </children>
-    </VBox>
-    <VBox spacing="8.0">
-      <children>
-        <Label styleClass="section-kicker" text="COLOR" />
-        <FlowPane fx:id="colorFlow" hgap="10.0" vgap="10.0" />
-      </children>
-    </VBox>
-    <VBox spacing="8.0">
-      <children>
-        <Label styleClass="section-kicker" text="TAGS" />
-        <FlowPane fx:id="tagFlow" hgap="8.0" vgap="8.0" />
-      </children>
-    </VBox>
   </children>
 </VBox>
