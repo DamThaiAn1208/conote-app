@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.conote.client.cache.ClientStoragePaths;
 import com.conote.client.model.NoteModel;
+import com.conote.client.model.SortMode;
 import com.conote.common.enums.NoteType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +68,34 @@ class CoNoteStoreTextPersistenceTest {
     assertCacheContains(note.getId(), "Saved from main window");
   }
 
+  @Test
+  void manualReorderPersistsAcrossReload() throws IOException {
+    CoNoteStore store = new CoNoteStore();
+    store.createNote(NoteType.TEXT);
+    store.createNote(NoteType.TEXT);
+    store.createNote(NoteType.TEXT);
+    NoteModel previousTop = store.getVisibleNotes().getFirst();
+    NoteModel previousBottom = store.getVisibleNotes().getLast();
+
+    boolean moved = store.moveVisibleNote(previousBottom.getId(), previousTop.getId(), false);
+    List<String> expectedOrder = store.getVisibleNotes().stream()
+        .map(NoteModel::getId)
+        .toList();
+
+    assertTrue(moved);
+    assertEquals(SortMode.MANUAL, store.sortModeProperty().get());
+    assertEquals(previousBottom.getId(), store.getVisibleNotes().getFirst().getId());
+    assertOrderCacheContains(previousBottom.getId());
+
+    CoNoteStore reloaded = new CoNoteStore();
+    List<String> reloadedOrder = reloaded.getVisibleNotes().stream()
+        .map(NoteModel::getId)
+        .toList();
+
+    assertEquals(SortMode.MANUAL, reloaded.sortModeProperty().get());
+    assertEquals(expectedOrder, reloadedOrder);
+  }
+
   private NoteModel findNote(CoNoteStore store, String noteId) {
     return store.getNotes().stream()
         .filter(note -> noteId.equals(note.getId()))
@@ -77,6 +107,12 @@ class CoNoteStoreTextPersistenceTest {
     String json = Files.readString(ClientStoragePaths.noteCacheFile());
     assertTrue(json.contains(noteId));
     assertTrue(json.contains(content));
+  }
+
+  private void assertOrderCacheContains(String noteId) throws IOException {
+    String json = Files.readString(ClientStoragePaths.noteOrderCacheFile());
+    assertTrue(json.contains(noteId));
+    assertTrue(json.contains("sortOrder"));
   }
 
   private Path createStorageDir(String prefix) throws IOException {

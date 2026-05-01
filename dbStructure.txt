@@ -4,7 +4,8 @@ table
 3. shares
 4. tags
 5. note_tags
-6. email_otps
+6. note_orders
+7. email_otps
 
 1. users
 - user_id (PK)
@@ -47,7 +48,13 @@ table
 - note_id (PK)
 - tag_id (PK)
 
-6. email_otps
+6. note_orders
+- user_id (PK, FK)
+- note_id (PK, FK)
+- sort_order
+- updated_at
+
+7. email_otps
 - otp_id (PK)
 - user_id (FK)
 - email
@@ -63,4 +70,6 @@ relationship:
 3. note_tags N-1 tags
 4. users 1-N shares
 5. notes 1-N shares
-6. users 1-N email_otps
+6. users 1-N note_orders
+7. notes 1-N note_orders
+8. users 1-N email_otps

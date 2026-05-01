@@ -27,6 +27,7 @@ public class NoteModel {
   private final BooleanProperty pinned = new SimpleBooleanProperty(this, "pinned", false);
   private final LongProperty createdAt = new SimpleLongProperty(this, "createdAt", 0L);
   private final LongProperty updatedAt = new SimpleLongProperty(this, "updatedAt", 0L);
+  private final LongProperty sortOrder = new SimpleLongProperty(this, "sortOrder", 0L);
   private final IntegerProperty revision = new SimpleIntegerProperty(this, "revision", 0);
   private final ObservableList<String> tags = FXCollections.observableArrayList();
   private final ObservableList<ChecklistItemModel> checklistItems =
@@ -41,7 +42,8 @@ public class NoteModel {
       NoteColor color,
       boolean pinned,
       long createdAt,
-      long updatedAt) {
+      long updatedAt,
+      long sortOrder) {
     this.id = normalizeId(id);
     setType(type);
     setTitle(title);
@@ -50,7 +52,20 @@ public class NoteModel {
     setPinned(pinned);
     setCreatedAt(createdAt);
     setUpdatedAt(updatedAt);
+    setSortOrder(sortOrder);
     installChangeTracking();
+  }
+
+  public NoteModel(
+      String id,
+      NoteType type,
+      String title,
+      String content,
+      NoteColor color,
+      boolean pinned,
+      long createdAt,
+      long updatedAt) {
+    this(id, type, title, content, color, pinned, createdAt, updatedAt, 0L);
   }
 
   public NoteModel(
@@ -61,7 +76,7 @@ public class NoteModel {
       boolean pinned,
       long createdAt,
       long updatedAt) {
-    this(UUID.randomUUID().toString(), type, title, content, color, pinned, createdAt, updatedAt);
+    this(UUID.randomUUID().toString(), type, title, content, color, pinned, createdAt, updatedAt, 0L);
   }
 
   public String getId() {
@@ -160,6 +175,18 @@ public class NoteModel {
     return updatedAt;
   }
 
+  public long getSortOrder() {
+    return sortOrder.get();
+  }
+
+  public void setSortOrder(long value) {
+    sortOrder.set(value);
+  }
+
+  public LongProperty sortOrderProperty() {
+    return sortOrder;
+  }
+
   public int getRevision() {
     return revision.get();
   }
@@ -198,7 +225,7 @@ public class NoteModel {
   }
 
   public Observable[] extractor() {
-    return new Observable[] {type, title, content, color, pinned, createdAt, updatedAt, revision};
+    return new Observable[] {type, title, content, color, pinned, createdAt, updatedAt, sortOrder, revision};
   }
 
   private void installChangeTracking() {
@@ -209,6 +236,7 @@ public class NoteModel {
     pinned.addListener((obs, oldValue, newValue) -> bumpRevision());
     createdAt.addListener((obs, oldValue, newValue) -> bumpRevision());
     updatedAt.addListener((obs, oldValue, newValue) -> bumpRevision());
+    sortOrder.addListener((obs, oldValue, newValue) -> bumpRevision());
     tags.addListener((ListChangeListener<String>) change -> bumpRevision());
     checklistItems.addListener((ListChangeListener<ChecklistItemModel>) change -> bumpRevision());
     shareMembers.addListener((ListChangeListener<ShareMember>) change -> bumpRevision());
