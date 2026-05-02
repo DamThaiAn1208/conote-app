@@ -235,7 +235,9 @@ public class NoteCardController {
     richPreviewFlow.setOnMousePressed(this::handleCollapsedTextPreviewClick);
     MotionSupport.installCardMotion(root, expanded);
     MotionSupport.installButtonMotion(addChecklistItemButton);
-    sharedSourceLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+    if (sharedSourceLabel != null) {
+      sharedSourceLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+    }
     root.hoverProperty().addListener((obs, oldValue, newValue) -> refreshActionButtonsVisibility());
     titleField.setFocusTraversable(true);
     pinButton.setFocusTraversable(true);
@@ -303,7 +305,9 @@ public class NoteCardController {
     note.createdAtProperty().addListener((obs, oldValue, newValue) -> refreshDate());
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> syncPinState());
     note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
+    note.ownerIdProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
     note.sharedByNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
+    note.sharedByIdProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
     note.sharedProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
     note.getTags().addListener((ListChangeListener<String>) change -> refreshTags());
     note.getChecklistItems().addListener((ListChangeListener<ChecklistItemModel>) this::handleChecklistItemsChanged);
@@ -540,6 +544,9 @@ public class NoteCardController {
   }
 
   private void refreshSourceBadge() {
+    if (sharedSourceBadge == null || sharedSourceLabel == null) {
+      return;
+    }
     boolean showBadge = note != null && note.isShared();
     sharedSourceBadge.setVisible(showBadge);
     sharedSourceBadge.setManaged(showBadge);
