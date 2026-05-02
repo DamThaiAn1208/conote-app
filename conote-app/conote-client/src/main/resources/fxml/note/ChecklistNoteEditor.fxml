@@ -5,12 +5,18 @@
 
 <VBox fx:controller="com.conote.client.controller.ChecklistNoteEditorController"
       fx:id="root"
+      maxHeight="Infinity"
+      maxWidth="Infinity"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       spacing="12.0"
       styleClass="checklist-editor-shell">
   <children>
-    <VBox fx:id="itemsBox" spacing="10.0" VBox.vgrow="ALWAYS" />
+    <VBox fx:id="itemsBox"
+          maxHeight="Infinity"
+          maxWidth="Infinity"
+          spacing="10.0"
+          VBox.vgrow="ALWAYS" />
     <Button mnemonicParsing="false" onAction="#addItem" styleClass="inline-link-button" text="+ Add checklist item" />
   </children>
 </VBox>

@@ -162,7 +162,10 @@ public class MainWindowController {
 
     LoadedView<NoteWindowController> view =
         ViewLoader.load("/fxml/note/NoteWindow.fxml");
-    Scene scene = new Scene(view.root(), 940, 660);
+    Scene scene = new Scene(
+        view.root(),
+        NoteWindowController.DEFAULT_WINDOW_WIDTH,
+        NoteWindowController.DEFAULT_WINDOW_HEIGHT);
     scene.setFill(Color.TRANSPARENT);
     scene.getStylesheets().add(ClientApplication.stylesheetUrl());
 
@@ -173,8 +176,9 @@ public class MainWindowController {
     stage.initStyle(StageStyle.TRANSPARENT);
     stage.setScene(scene);
     stage.setTitle("");
-    stage.setMinWidth(740);
-    stage.setMinHeight(540);
+    stage.setMinWidth(NoteWindowController.MIN_WINDOW_WIDTH);
+    stage.setMinHeight(NoteWindowController.MIN_WINDOW_HEIGHT);
+    stage.setResizable(true);
     stage.setOnHidden(event -> {
       openWindows.remove(note.getId());
       openWindowControllers.remove(note.getId());
