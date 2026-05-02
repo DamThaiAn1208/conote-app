@@ -37,6 +37,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
@@ -152,6 +153,12 @@ public class NoteCardController {
   private FlowPane tagsFlow;
 
   @FXML
+  private HBox sharedSourceBadge;
+
+  @FXML
+  private Label sharedSourceLabel;
+
+  @FXML
   private Label dateLabel;
 
   @FXML
@@ -222,6 +229,7 @@ public class NoteCardController {
     richPreviewFlow.setOnMousePressed(this::handleCollapsedTextPreviewClick);
     MotionSupport.installCardMotion(root, expanded);
     MotionSupport.installButtonMotion(addChecklistItemButton);
+    sharedSourceLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
     root.hoverProperty().addListener((obs, oldValue, newValue) -> refreshActionButtonsVisibility());
     titleField.setFocusTraversable(true);
     pinButton.setFocusTraversable(true);
@@ -286,6 +294,9 @@ public class NoteCardController {
     note.colorProperty().addListener((obs, oldValue, newValue) -> refreshSurface());
     note.createdAtProperty().addListener((obs, oldValue, newValue) -> refreshDate());
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> syncPinState());
+    note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
+    note.sharedByNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
+    note.sharedProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
     note.getTags().addListener((ListChangeListener<String>) change -> refreshTags());
     note.getChecklistItems().addListener((ListChangeListener<ChecklistItemModel>) this::handleChecklistItemsChanged);
     textContentStack.widthProperty().addListener((obs, oldValue, newValue) -> refreshTextPresentation());
@@ -413,6 +424,7 @@ public class NoteCardController {
     refreshPreview();
     refreshDate();
     refreshTags();
+    refreshSourceBadge();
     refreshSurface();
     syncQuickTextMode();
     refreshEditorVisibility();
@@ -505,6 +517,22 @@ public class NoteCardController {
 
   private void refreshDate() {
     dateLabel.setText(CARD_DATE.format(Instant.ofEpochMilli(note.getCreatedAt()).atZone(ZoneId.systemDefault())));
+  }
+
+  private void refreshSourceBadge() {
+    boolean showBadge = note != null && note.isShared();
+    sharedSourceBadge.setVisible(showBadge);
+    sharedSourceBadge.setManaged(showBadge);
+    if (!showBadge) {
+      sharedSourceLabel.setText("");
+      return;
+    }
+
+    String displayName = note.getSharedByName();
+    if (displayName == null || displayName.isBlank()) {
+      displayName = note.getOwnerName();
+    }
+    sharedSourceLabel.setText(displayName == null || displayName.isBlank() ? "Shared" : displayName.trim());
   }
 
   private void refreshTags() {

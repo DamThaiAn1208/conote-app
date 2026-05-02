@@ -512,6 +512,37 @@
   -fx-font-weight: 800;
 }
 
+.source-filter-group {
+  -fx-background-color: rgba(241, 245, 249, 0.78);
+  -fx-background-radius: 10px;
+  -fx-padding: 3px;
+}
+
+.source-filter-chip {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-border-width: 1px;
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+  -fx-padding: 7px 10px;
+  -fx-text-fill: #64748b;
+  -fx-font-size: 11px;
+  -fx-font-weight: 700;
+  -fx-cursor: hand;
+}
+
+.source-filter-chip:hover {
+  -fx-background-color: rgba(255, 255, 255, 0.58);
+  -fx-text-fill: #334155;
+}
+
+.source-filter-chip-active {
+  -fx-background-color: white;
+  -fx-border-color: rgba(226, 232, 240, 0.94);
+  -fx-text-fill: #0f172a;
+  -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 7, 0.14, 0, 1);
+}
+
 .color-filter-swatch {
   -fx-min-width: 26px;
   -fx-min-height: 26px;
@@ -979,6 +1010,7 @@
   -fx-padding: 0;
   -fx-min-height: 10px;
   -fx-pref-height: 10px;
+  -fx-spacing: 6px;
 }
 
 .note-card-date {
@@ -986,6 +1018,28 @@
   -fx-font-size: 10px;
   -fx-font-weight: 700;
   -fx-padding: 0;
+}
+
+.note-source-badge {
+  -fx-background-color: rgba(255, 255, 255, 0.54);
+  -fx-border-color: rgba(148, 163, 184, 0.2);
+  -fx-background-radius: 999px;
+  -fx-border-radius: 999px;
+  -fx-padding: 2px 6px;
+  -fx-min-height: 17px;
+  -fx-pref-height: 17px;
+  -fx-max-height: 17px;
+}
+
+.note-source-badge-icon {
+  -fx-icon-color: #64748b;
+  -fx-opacity: 0.74;
+}
+
+.note-source-badge-label {
+  -fx-text-fill: #64748b;
+  -fx-font-size: 9px;
+  -fx-font-weight: 700;
 }
 
 .quick-note-textarea,
@@ -1937,6 +1991,26 @@
   -fx-text-fill: #f8fafc;
 }
 
+.theme-dark .source-filter-group {
+  -fx-background-color: rgba(15, 23, 42, 0.58);
+}
+
+.theme-dark .source-filter-chip {
+  -fx-text-fill: #cbd5e1;
+}
+
+.theme-dark .source-filter-chip:hover {
+  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-text-fill: #f8fafc;
+}
+
+.theme-dark .source-filter-chip-active {
+  -fx-background-color: rgba(30, 41, 59, 0.96);
+  -fx-border-color: rgba(252, 186, 3, 0.42);
+  -fx-text-fill: #f8fafc;
+  -fx-effect: dropshadow(gaussian, rgba(2, 6, 23, 0.26), 7, 0.14, 0, 1);
+}
+
 .theme-dark .note-card .inline-checklist-field {
   -fx-background-color: transparent;
   -fx-border-color: transparent;
@@ -2016,6 +2090,17 @@
 
 .theme-dark .note-card {
   -fx-border-color: rgba(148, 163, 184, 0.24);
+}
+
+.theme-dark .note-source-badge {
+  -fx-background-color: rgba(15, 23, 42, 0.32);
+  -fx-border-color: rgba(148, 163, 184, 0.22);
+}
+
+.theme-dark .note-source-badge-icon,
+.theme-dark .note-source-badge-label {
+  -fx-icon-color: #cbd5e1;
+  -fx-text-fill: #cbd5e1;
 }
 
 .theme-dark .note-card-drop-before {

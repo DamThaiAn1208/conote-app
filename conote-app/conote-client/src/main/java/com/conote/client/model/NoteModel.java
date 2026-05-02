@@ -28,6 +28,11 @@ public class NoteModel {
   private final LongProperty createdAt = new SimpleLongProperty(this, "createdAt", 0L);
   private final LongProperty updatedAt = new SimpleLongProperty(this, "updatedAt", 0L);
   private final LongProperty sortOrder = new SimpleLongProperty(this, "sortOrder", 0L);
+  private final StringProperty ownerId = new SimpleStringProperty(this, "ownerId", "");
+  private final StringProperty ownerName = new SimpleStringProperty(this, "ownerName", "");
+  private final StringProperty sharedById = new SimpleStringProperty(this, "sharedById", "");
+  private final StringProperty sharedByName = new SimpleStringProperty(this, "sharedByName", "");
+  private final BooleanProperty shared = new SimpleBooleanProperty(this, "shared", false);
   private final IntegerProperty revision = new SimpleIntegerProperty(this, "revision", 0);
   private final ObservableList<String> tags = FXCollections.observableArrayList();
   private final ObservableList<ChecklistItemModel> checklistItems =
@@ -187,6 +192,66 @@ public class NoteModel {
     return sortOrder;
   }
 
+  public String getOwnerId() {
+    return ownerId.get();
+  }
+
+  public void setOwnerId(String value) {
+    ownerId.set(value == null ? "" : value);
+  }
+
+  public StringProperty ownerIdProperty() {
+    return ownerId;
+  }
+
+  public String getOwnerName() {
+    return ownerName.get();
+  }
+
+  public void setOwnerName(String value) {
+    ownerName.set(value == null ? "" : value);
+  }
+
+  public StringProperty ownerNameProperty() {
+    return ownerName;
+  }
+
+  public String getSharedById() {
+    return sharedById.get();
+  }
+
+  public void setSharedById(String value) {
+    sharedById.set(value == null ? "" : value);
+  }
+
+  public StringProperty sharedByIdProperty() {
+    return sharedById;
+  }
+
+  public String getSharedByName() {
+    return sharedByName.get();
+  }
+
+  public void setSharedByName(String value) {
+    sharedByName.set(value == null ? "" : value);
+  }
+
+  public StringProperty sharedByNameProperty() {
+    return sharedByName;
+  }
+
+  public boolean isShared() {
+    return shared.get();
+  }
+
+  public void setShared(boolean value) {
+    shared.set(value);
+  }
+
+  public BooleanProperty sharedProperty() {
+    return shared;
+  }
+
   public int getRevision() {
     return revision.get();
   }
@@ -225,7 +290,21 @@ public class NoteModel {
   }
 
   public Observable[] extractor() {
-    return new Observable[] {type, title, content, color, pinned, createdAt, updatedAt, sortOrder, revision};
+    return new Observable[] {
+        type,
+        title,
+        content,
+        color,
+        pinned,
+        createdAt,
+        updatedAt,
+        sortOrder,
+        ownerId,
+        ownerName,
+        sharedById,
+        sharedByName,
+        shared,
+        revision};
   }
 
   private void installChangeTracking() {
@@ -237,6 +316,11 @@ public class NoteModel {
     createdAt.addListener((obs, oldValue, newValue) -> bumpRevision());
     updatedAt.addListener((obs, oldValue, newValue) -> bumpRevision());
     sortOrder.addListener((obs, oldValue, newValue) -> bumpRevision());
+    ownerId.addListener((obs, oldValue, newValue) -> bumpRevision());
+    ownerName.addListener((obs, oldValue, newValue) -> bumpRevision());
+    sharedById.addListener((obs, oldValue, newValue) -> bumpRevision());
+    sharedByName.addListener((obs, oldValue, newValue) -> bumpRevision());
+    shared.addListener((obs, oldValue, newValue) -> bumpRevision());
     tags.addListener((ListChangeListener<String>) change -> bumpRevision());
     checklistItems.addListener((ListChangeListener<ChecklistItemModel>) change -> bumpRevision());
     shareMembers.addListener((ListChangeListener<ShareMember>) change -> bumpRevision());

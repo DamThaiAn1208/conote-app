@@ -75,6 +75,21 @@
         <HBox alignment="CENTER_RIGHT" styleClass="note-card-date-row">
           <children>
             <Region HBox.hgrow="ALWAYS" />
+            <HBox fx:id="sharedSourceBadge"
+                  alignment="CENTER"
+                  managed="false"
+                  maxWidth="96.0"
+                  spacing="3.0"
+                  styleClass="note-source-badge"
+                  visible="false">
+              <children>
+                <FontIcon iconLiteral="codicon-account:11" styleClass="note-source-badge-icon" />
+                <Label fx:id="sharedSourceLabel"
+                       maxWidth="72.0"
+                       styleClass="note-source-badge-label"
+                       text="Trần Minh" />
+              </children>
+            </HBox>
             <Label fx:id="dateLabel" styleClass="note-card-date" text="Apr 17" />
           </children>
         </HBox>
