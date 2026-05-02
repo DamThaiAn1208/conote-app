@@ -15,6 +15,7 @@ import com.conote.client.model.AppTheme;
 import com.conote.client.model.ChecklistItemModel;
 import com.conote.client.model.NoteColor;
 import com.conote.client.model.NoteModel;
+import com.conote.client.model.NoteSourceFilter;
 import com.conote.client.model.ShareMember;
 import com.conote.client.model.SortMode;
 import com.conote.client.util.RichTextContentCodec;
@@ -64,6 +65,8 @@ public class CoNoteStore {
   private final FilteredList<NoteModel> visibleNotes = new FilteredList<>(notes);
   private final StringProperty searchQuery = new SimpleStringProperty("");
   private final ObjectProperty<SortMode> sortMode = new SimpleObjectProperty<>(SortMode.NEWEST);
+  private final ObjectProperty<NoteSourceFilter> sourceFilter =
+      new SimpleObjectProperty<>(NoteSourceFilter.ALL);
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(AppTheme.LIGHT);
   private final ObjectProperty<String> expandedNoteId = new SimpleObjectProperty<>();
   private final BooleanProperty loading = new SimpleBooleanProperty(true);
@@ -99,6 +102,7 @@ public class CoNoteStore {
   private void bindFiltering() {
     visibleNotes.setPredicate(this::matchesFilters);
     searchQuery.addListener((obs, oldValue, newValue) -> refreshFilters());
+    sourceFilter.addListener((obs, oldValue, newValue) -> refreshFilters());
     selectedTags.addListener((SetChangeListener<String>) change -> refreshFilters());
     selectedColors.addListener((SetChangeListener<NoteColor>) change -> refreshFilters());
     notes.addListener((ListChangeListener<NoteModel>) change -> refreshFilters());
@@ -113,6 +117,7 @@ public class CoNoteStore {
     theme.set(resolveTheme(uiState.getTheme()));
     searchQuery.set(uiState.getLatestSearchKeyword() == null ? "" : uiState.getLatestSearchKeyword());
     sortMode.set(resolveSortMode(uiState.getSortMode()));
+    sourceFilter.set(resolveSourceFilter(uiState.getSourceFilter()));
 
     selectedTags.clear();
     if (uiState.getSelectedTags() != null) {
@@ -159,12 +164,17 @@ public class CoNoteStore {
   private void bindUiStatePersistence() {
     searchQuery.addListener((obs, oldValue, newValue) -> saveUiState());
     sortMode.addListener((obs, oldValue, newValue) -> saveUiState());
+    sourceFilter.addListener((obs, oldValue, newValue) -> saveUiState());
     theme.addListener((obs, oldValue, newValue) -> saveUiState());
     selectedTags.addListener((SetChangeListener<String>) change -> saveUiState());
     selectedColors.addListener((SetChangeListener<NoteColor>) change -> saveUiState());
   }
 
   private boolean matchesFilters(NoteModel note) {
+    if (!matchesSourceFilter(note)) {
+      return false;
+    }
+
     String query = searchQuery.get() == null ? "" : searchQuery.get().trim().toLowerCase(Locale.ROOT);
     if (!query.isBlank()) {
       boolean matchText = safe(note.getTitle()).contains(query)
@@ -189,6 +199,19 @@ public class CoNoteStore {
       }
     }
     return true;
+  }
+
+  private boolean matchesSourceFilter(NoteModel note) {
+    NoteSourceFilter filter = sourceFilter.get() == null ? NoteSourceFilter.ALL : sourceFilter.get();
+    return switch (filter) {
+      case ALL -> true;
+      case MINE -> isOwnedByCurrentUser(note);
+      case SHARED -> note != null && note.isShared();
+    };
+  }
+
+  private boolean isOwnedByCurrentUser(NoteModel note) {
+    return note != null && currentUserKey().equals(note.getOwnerId());
   }
 
   private Comparator<NoteModel> createComparator(SortMode mode) {
@@ -311,6 +334,25 @@ public class CoNoteStore {
     visibleNotes.setPredicate(this::matchesFilters);
   }
 
+  void replaceNotesForTesting(List<Note> testNotes) {
+    loading.set(true);
+    noteEntitiesById.clear();
+    sortOrderByNoteId.clear();
+    List<Note> activeNotes = testNotes == null ? List.of() : new ArrayList<>(testNotes);
+    ensureSortOrders(activeNotes);
+    List<NoteModel> models = new ArrayList<>();
+    for (Note note : activeNotes) {
+      if (note == null || Boolean.TRUE.equals(note.getDeleted())) {
+        continue;
+      }
+      noteEntitiesById.put(note.getNoteId(), note);
+      models.add(toNoteModel(note));
+    }
+    notes.setAll(models);
+    applySortModeOrdering(sortMode.get());
+    loading.set(false);
+  }
+
   public void setSearchQuery(String value) {
     searchQuery.set(value == null ? "" : value);
   }
@@ -335,15 +377,23 @@ public class CoNoteStore {
     sortMode.set(value == null ? SortMode.NEWEST : value);
   }
 
+  public void setSourceFilter(NoteSourceFilter value) {
+    sourceFilter.set(value == null ? NoteSourceFilter.ALL : value);
+  }
+
   public boolean hasActiveFilters() {
     SortMode activeSort = sortMode.get() == null ? SortMode.NEWEST : sortMode.get();
+    NoteSourceFilter activeSource =
+        sourceFilter.get() == null ? NoteSourceFilter.ALL : sourceFilter.get();
     return activeSort != SortMode.NEWEST
+        || activeSource != NoteSourceFilter.ALL
         || !selectedTags.isEmpty()
         || !selectedColors.isEmpty();
   }
 
   public void clearAllFilters() {
     setSortMode(SortMode.NEWEST);
+    setSourceFilter(NoteSourceFilter.ALL);
     selectedTags.clear();
     selectedColors.clear();
     refreshFilters();
@@ -513,6 +563,14 @@ public class CoNoteStore {
     return sortMode;
   }
 
+  public ObjectProperty<NoteSourceFilter> sourceFilterProperty() {
+    return sourceFilter;
+  }
+
+  public String getCurrentUserId() {
+    return currentUserKey();
+  }
+
   public AppTheme getTheme() {
     return theme.get();
   }
@@ -647,6 +705,7 @@ public class CoNoteStore {
 
     model.getTags().setAll(extractTagNames(note));
     model.getShareMembers().setAll(extractShareMembers(note));
+    applySourceMetadata(note, model);
     return model;
   }
 
@@ -912,6 +971,46 @@ public class CoNoteStore {
     return members;
   }
 
+  private void applySourceMetadata(Note note, NoteModel model) {
+    User owner = note.getOwner() == null ? buildDefaultOwner() : note.getOwner();
+    String ownerId = userIdentityKey(owner);
+    String ownerName = resolveDisplayName(owner.getFullName(), owner.getEmail());
+    Share incomingShare = findIncomingShare(note);
+    boolean ownedByCurrentUser = currentUserKey().equals(ownerId);
+    boolean sharedToCurrentUser = incomingShare != null || !ownedByCurrentUser;
+
+    model.setOwnerId(ownerId);
+    model.setOwnerName(ownerName);
+    model.setShared(sharedToCurrentUser);
+    if (incomingShare != null && incomingShare.getSharedBy() != null) {
+      User sharedBy = incomingShare.getSharedBy();
+      model.setSharedById(userIdentityKey(sharedBy));
+      model.setSharedByName(resolveDisplayName(sharedBy.getFullName(), sharedBy.getEmail()));
+    } else if (sharedToCurrentUser) {
+      model.setSharedById(ownerId);
+      model.setSharedByName(ownerName);
+    } else {
+      model.setSharedById("");
+      model.setSharedByName("");
+    }
+  }
+
+  private Share findIncomingShare(Note note) {
+    if (note == null || note.getShares() == null) {
+      return null;
+    }
+
+    for (Share share : note.getShares()) {
+      if (share == null || share.getSharedWith() == null) {
+        continue;
+      }
+      if (currentUserKey().equals(userIdentityKey(share.getSharedWith()))) {
+        return share;
+      }
+    }
+    return null;
+  }
+
   private List<ChecklistItemModel> checklistItemsFromText(String plainText) {
     String normalized = plainText == null ? "" : plainText.replace("\r\n", "\n");
     if (normalized.isBlank()) {
@@ -1030,7 +1129,22 @@ public class CoNoteStore {
     }
   }
 
+  private NoteSourceFilter resolveSourceFilter(String storedSourceFilter) {
+    if (storedSourceFilter == null || storedSourceFilter.isBlank()) {
+      return NoteSourceFilter.ALL;
+    }
+
+    try {
+      return NoteSourceFilter.valueOf(storedSourceFilter.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException exception) {
+      return NoteSourceFilter.ALL;
+    }
+  }
+
   private String buildSelectedFilterSummary() {
+    if (sourceFilter.get() != null && sourceFilter.get() != NoteSourceFilter.ALL) {
+      return "source:" + sourceFilter.get().name();
+    }
     if (!selectedTags.isEmpty()) {
       return "tag:" + selectedTags.iterator().next();
     }
@@ -1050,6 +1164,7 @@ public class CoNoteStore {
     uiState.setTheme(getTheme().name());
     uiState.setLatestSearchKeyword(searchQuery.get());
     uiState.setSortMode(sortMode.get() == null ? SortMode.NEWEST.name() : sortMode.get().name());
+    uiState.setSourceFilter(sourceFilter.get() == null ? NoteSourceFilter.ALL.name() : sourceFilter.get().name());
     uiState.setSelectedFilter(buildSelectedFilterSummary());
     uiState.setSelectedTags(new ArrayList<>(selectedTags));
 
@@ -1078,6 +1193,20 @@ public class CoNoteStore {
       return null;
     }
     return email.trim().toLowerCase(Locale.ROOT);
+  }
+
+  private String userIdentityKey(User user) {
+    if (user == null) {
+      return "";
+    }
+    if (user.getUserId() != null) {
+      return String.valueOf(user.getUserId());
+    }
+    String emailKey = emailKey(user.getEmail());
+    if (emailKey != null) {
+      return emailKey;
+    }
+    return user.getUserName() == null ? "" : user.getUserName().trim().toLowerCase(Locale.ROOT);
   }
 
   private String resolveDisplayName(String displayName, String email) {

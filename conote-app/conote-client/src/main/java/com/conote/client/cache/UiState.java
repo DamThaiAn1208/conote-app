@@ -10,6 +10,7 @@ public class UiState {
   private String latestSearchKeyword = "";
   private String selectedFilter = "";
   private String sortMode = "NEWEST";
+  private String sourceFilter = "ALL";
   private List<String> selectedTags = new ArrayList<>();
   private List<String> selectedColors = new ArrayList<>();
 
@@ -59,6 +60,14 @@ public class UiState {
 
   public void setSortMode(String sortMode) {
     this.sortMode = sortMode == null ? "NEWEST" : sortMode;
+  }
+
+  public String getSourceFilter() {
+    return sourceFilter;
+  }
+
+  public void setSourceFilter(String sourceFilter) {
+    this.sourceFilter = sourceFilter == null ? "ALL" : sourceFilter;
   }
 
   public List<String> getSelectedTags() {

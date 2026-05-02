@@ -113,6 +113,17 @@
         <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="note-card-date-row">
           <children>
             <Region HBox.hgrow="ALWAYS" />
+            <HBox fx:id="sharedSourceBadge"
+                  alignment="CENTER_LEFT"
+                  managed="false"
+                  spacing="4.0"
+                  styleClass="note-source-badge"
+                  visible="false">
+              <children>
+                <FontIcon iconLiteral="codicon-account:10" styleClass="note-source-badge-icon" />
+                <Label fx:id="sharedSourceLabel" styleClass="note-source-badge-label" text="Shared" />
+              </children>
+            </HBox>
             <HBox fx:id="sharedInfoRow"
                   alignment="CENTER_LEFT"
                   managed="false"

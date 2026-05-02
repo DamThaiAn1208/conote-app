@@ -2,6 +2,7 @@ package com.conote.client.controller;
 
 import com.conote.client.model.NoteColor;
 import com.conote.client.model.NoteModel;
+import com.conote.client.model.NoteSourceFilter;
 import com.conote.client.model.SortMode;
 import com.conote.client.service.CoNoteStore;
 import com.conote.client.util.MotionSupport;
@@ -16,6 +17,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -31,6 +33,9 @@ public class FilterPanelController {
 
   @FXML
   private Button clearButton;
+
+  @FXML
+  private HBox sourceFilterBox;
 
   @FXML
   private FlowPane colorFlow;
@@ -61,6 +66,8 @@ public class FilterPanelController {
     sortCombo.valueProperty().bindBidirectional(store.sortModeProperty());
     sortCombo.setValue(store.sortModeProperty().get());
     store.getNotes().addListener((ListChangeListener<NoteModel>) change -> refreshTagChips());
+    store.sourceFilterProperty().addListener((obs, oldValue, newValue) -> refreshSourceChips());
+    refreshSourceChips();
     refreshColorSwatches();
     refreshTagChips();
   }
@@ -91,6 +98,7 @@ public class FilterPanelController {
     }
 
     store.clearAllFilters();
+    refreshSourceChips();
     refreshColorSwatches();
     refreshTagChips();
     setExpanded(false);
@@ -113,6 +121,27 @@ public class FilterPanelController {
         refreshColorSwatches();
       });
       colorFlow.getChildren().add(swatch);
+    }
+    syncExpandedHeight();
+  }
+
+  private void refreshSourceChips() {
+    sourceFilterBox.getChildren().clear();
+    for (NoteSourceFilter sourceFilter : NoteSourceFilter.values()) {
+      Button chip = new Button(sourceFilter.toString());
+      chip.getStyleClass().add("source-filter-chip");
+      if (store != null && store.sourceFilterProperty().get() == sourceFilter) {
+        chip.getStyleClass().add("source-filter-chip-active");
+      }
+      MotionSupport.installGentleButtonMotion(chip);
+      chip.setFocusTraversable(false);
+      chip.setMaxWidth(Double.MAX_VALUE);
+      HBox.setHgrow(chip, javafx.scene.layout.Priority.ALWAYS);
+      chip.setOnAction(event -> {
+        store.setSourceFilter(sourceFilter);
+        refreshSourceChips();
+      });
+      sourceFilterBox.getChildren().add(chip);
     }
     syncExpandedHeight();
   }
