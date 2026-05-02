@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -76,16 +75,6 @@ public class ShareDialogController {
   private void closeDialog(ActionEvent event) {
     event.consume();
     close();
-  }
-
-  @FXML
-  private void closeOnBackdrop(MouseEvent event) {
-    close();
-  }
-
-  @FXML
-  private void consume(MouseEvent event) {
-    event.consume();
   }
 
   private void renderMembers() {

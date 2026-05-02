@@ -14,13 +14,16 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            alignment="CENTER"
-           onMouseClicked="#closeOnBackdrop"
-           styleClass="dialog-backdrop">
+           styleClass="modal-dialog-root">
+  <padding>
+    <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+  </padding>
   <children>
-    <VBox maxWidth="420.0" onMouseClicked="#consume" prefWidth="420.0" spacing="14.0">
+    <VBox maxWidth="420.0" prefWidth="420.0" spacing="14.0">
       <styleClass>
         <String fx:value="surface-shell" />
         <String fx:value="dialog-card" />
+        <String fx:value="confirm-delete-dialog-card" />
       </styleClass>
       <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

@@ -29,6 +29,10 @@ public class NoteModel {
   private final LongProperty updatedAt = new SimpleLongProperty(this, "updatedAt", 0L);
   private final LongProperty sortOrder = new SimpleLongProperty(this, "sortOrder", 0L);
   private final IntegerProperty revision = new SimpleIntegerProperty(this, "revision", 0);
+  private final BooleanProperty mockShared = new SimpleBooleanProperty(this, "mockShared", false);
+  private final StringProperty mockSharedBy = new SimpleStringProperty(this, "mockSharedBy", "");
+  private final StringProperty mockSharePermission =
+      new SimpleStringProperty(this, "mockSharePermission", "view");
   private final ObservableList<String> tags = FXCollections.observableArrayList();
   private final ObservableList<ChecklistItemModel> checklistItems =
       FXCollections.observableArrayList(ChecklistItemModel::extractor);
@@ -195,6 +199,64 @@ public class NoteModel {
     return revision;
   }
 
+  public boolean isMockShared() {
+    return mockShared.get();
+  }
+
+  public void setMockShared(boolean value) {
+    mockShared.set(value);
+  }
+
+  public BooleanProperty mockSharedProperty() {
+    return mockShared;
+  }
+
+  public String getMockSharedBy() {
+    return mockSharedBy.get();
+  }
+
+  public void setMockSharedBy(String value) {
+    mockSharedBy.set(value == null ? "" : value.trim());
+  }
+
+  public StringProperty mockSharedByProperty() {
+    return mockSharedBy;
+  }
+
+  public String getMockSharePermission() {
+    return mockSharePermission.get();
+  }
+
+  public void setMockSharePermission(String value) {
+    mockSharePermission.set(normalizeMockSharePermission(value));
+  }
+
+  public StringProperty mockSharePermissionProperty() {
+    return mockSharePermission;
+  }
+
+  public void setMockSharedState(boolean shared, String sharedBy, String permission) {
+    setMockShared(shared);
+    setMockSharedBy(shared ? sharedBy : "");
+    setMockSharePermission(shared ? permission : "view");
+  }
+
+  public boolean hasMockSharedInfo() {
+    return isMockShared() && !getMockSharedBy().isBlank();
+  }
+
+  public String getMockSharedDisplayText() {
+    return hasMockSharedInfo() ? "Chia sẻ bởi " + getMockSharedBy() : "";
+  }
+
+  public boolean mockShareCanEdit() {
+    return "edit".equalsIgnoreCase(getMockSharePermission());
+  }
+
+  public String getMockPermissionDisplayText() {
+    return mockShareCanEdit() ? "CÓ THỂ SỬA" : "CHỈ XEM";
+  }
+
   public ObservableList<String> getTags() {
     return tags;
   }
@@ -225,7 +287,20 @@ public class NoteModel {
   }
 
   public Observable[] extractor() {
-    return new Observable[] {type, title, content, color, pinned, createdAt, updatedAt, sortOrder, revision};
+    return new Observable[] {
+      type,
+      title,
+      content,
+      color,
+      pinned,
+      createdAt,
+      updatedAt,
+      sortOrder,
+      revision,
+      mockShared,
+      mockSharedBy,
+      mockSharePermission
+    };
   }
 
   private void installChangeTracking() {
@@ -237,6 +312,9 @@ public class NoteModel {
     createdAt.addListener((obs, oldValue, newValue) -> bumpRevision());
     updatedAt.addListener((obs, oldValue, newValue) -> bumpRevision());
     sortOrder.addListener((obs, oldValue, newValue) -> bumpRevision());
+    mockShared.addListener((obs, oldValue, newValue) -> bumpRevision());
+    mockSharedBy.addListener((obs, oldValue, newValue) -> bumpRevision());
+    mockSharePermission.addListener((obs, oldValue, newValue) -> bumpRevision());
     tags.addListener((ListChangeListener<String>) change -> bumpRevision());
     checklistItems.addListener((ListChangeListener<ChecklistItemModel>) change -> bumpRevision());
     shareMembers.addListener((ListChangeListener<ShareMember>) change -> bumpRevision());
@@ -248,5 +326,9 @@ public class NoteModel {
 
   private String normalizeId(String value) {
     return value == null || value.isBlank() ? UUID.randomUUID().toString() : value;
+  }
+
+  private String normalizeMockSharePermission(String value) {
+    return "edit".equalsIgnoreCase(value) ? "edit" : "view";
   }
 }

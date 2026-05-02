@@ -18,13 +18,16 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            alignment="CENTER"
-           onMouseClicked="#closeOnBackdrop"
-           styleClass="dialog-backdrop">
+           styleClass="modal-dialog-root">
+  <padding>
+    <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+  </padding>
   <children>
-    <VBox maxWidth="540.0" onMouseClicked="#consume" prefWidth="540.0" spacing="16.0">
+    <VBox maxWidth="460.0" prefWidth="460.0" spacing="16.0">
       <styleClass>
         <String fx:value="surface-shell" />
         <String fx:value="dialog-card" />
+        <String fx:value="share-dialog-card" />
       </styleClass>
       <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
@@ -44,9 +47,9 @@
         <Label fx:id="noteTitleLabel" styleClass="dialog-subtitle" text="Note title" />
         <HBox spacing="10.0">
           <children>
-            <TextField fx:id="emailField" promptText="Enter email..." styleClass="popover-input" HBox.hgrow="ALWAYS" />
+            <TextField fx:id="emailField" promptText="Email or username..." styleClass="popover-input" HBox.hgrow="ALWAYS" />
             <ComboBox fx:id="permissionCombo" prefWidth="110.0" styleClass="filter-combo" />
-            <Button mnemonicParsing="false" onAction="#inviteMember" styleClass="primary-compact-button" text="Invite" />
+            <Button mnemonicParsing="false" onAction="#inviteMember" styleClass="primary-compact-button" text="Share" />
           </children>
         </HBox>
         <Separator />
@@ -60,8 +63,9 @@
         <HBox alignment="CENTER_LEFT" spacing="10.0">
           <children>
             <Label styleClass="dialog-subtitle" text="Share via link" />
-            <Region HBox.hgrow="ALWAYS" />
             <Button mnemonicParsing="false" onAction="#copyLink" styleClass="secondary-action-button" text="Copy link" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#closeDialog" styleClass="secondary-action-button" text="Cancel" />
           </children>
         </HBox>
       </children>

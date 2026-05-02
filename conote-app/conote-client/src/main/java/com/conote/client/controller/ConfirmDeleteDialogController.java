@@ -4,7 +4,6 @@ import com.conote.client.model.NoteModel;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
 
 public class ConfirmDeleteDialogController {
   @FXML
@@ -42,17 +41,5 @@ public class ConfirmDeleteDialogController {
     if (onClose != null) {
       onClose.run();
     }
-  }
-
-  @FXML
-  private void closeOnBackdrop(MouseEvent event) {
-    if (onClose != null) {
-      onClose.run();
-    }
-  }
-
-  @FXML
-  private void consume(MouseEvent event) {
-    event.consume();
   }
 }
