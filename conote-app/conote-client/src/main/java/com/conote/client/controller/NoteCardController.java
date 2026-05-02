@@ -114,6 +114,12 @@ public class NoteCardController {
   private TextField titleField;
 
   @FXML
+  private HBox sharedInfoRow;
+
+  @FXML
+  private Label sharedByLabel;
+
+  @FXML
   private Label previewLabel;
 
   @FXML
@@ -292,6 +298,8 @@ public class NoteCardController {
     note.contentProperty().addListener((obs, oldValue, newValue) -> handleContentChanged());
     note.typeProperty().addListener((obs, oldValue, newValue) -> refreshFromModel());
     note.colorProperty().addListener((obs, oldValue, newValue) -> refreshSurface());
+    note.mockSharedProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.mockSharedByProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
     note.createdAtProperty().addListener((obs, oldValue, newValue) -> refreshDate());
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> syncPinState());
     note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
@@ -421,6 +429,7 @@ public class NoteCardController {
 
   private void refreshFromModel() {
     updateTitle();
+    refreshSharedInfo();
     refreshPreview();
     refreshDate();
     refreshTags();
@@ -438,6 +447,17 @@ public class NoteCardController {
     if (expanded.get() && note.getType() == NoteType.CHECKLIST) {
       expandedContainer.setMaxHeight(measureExpandedHeight());
     }
+  }
+
+  private void refreshSharedInfo() {
+    boolean visible = note != null && note.hasMockSharedInfo();
+    sharedInfoRow.setVisible(visible);
+    sharedInfoRow.setManaged(visible);
+    if (!visible) {
+      return;
+    }
+
+    sharedByLabel.setText(note.getMockSharedBy());
   }
 
   private void refreshEditorVisibility() {

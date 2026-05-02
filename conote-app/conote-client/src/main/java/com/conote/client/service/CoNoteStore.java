@@ -57,6 +57,8 @@ public class CoNoteStore {
   private static final String DEFAULT_LOCAL_USER_EMAIL = "local@conote.app";
   private static final String DEFAULT_LOCAL_USER_KEY = DEFAULT_LOCAL_USER_EMAIL;
   private static final long NOTE_ORDER_GAP = 1000L;
+  private static final String DEMO_SHARED_BY = "Trần Minh";
+  private static final String DEMO_SHARED_PERMISSION = "view";
 
   private final ObservableList<NoteModel> notes =
       FXCollections.observableArrayList(note -> note.extractor());
@@ -152,6 +154,7 @@ public class CoNoteStore {
       noteEntitiesById.put(note.getNoteId(), note);
       loadedModels.add(toNoteModel(note));
     }
+    applyMockSharedDemoState(loadedModels);
 
     notes.setAll(loadedModels);
     applySortModeOrdering(sortMode.get());
@@ -254,6 +257,9 @@ public class CoNoteStore {
     sortOrderByNoteId.put(saved.getNoteId(), nextSortOrderForCreatedNote());
 
     NoteModel model = toNoteModel(saved);
+    if (notes.isEmpty()) {
+      model.setMockSharedState(true, DEMO_SHARED_BY, DEMO_SHARED_PERMISSION);
+    }
     insertCreatedNote(model);
     expandedNoteId.set(model.getId());
     enqueueSync(saved, SyncActionType.CREATE_NOTE);
@@ -714,6 +720,19 @@ public class CoNoteStore {
 
     notes.add(note);
     applySortModeOrdering(sortMode.get());
+  }
+
+  private void applyMockSharedDemoState(List<NoteModel> models) {
+    if (models == null || models.isEmpty()) {
+      return;
+    }
+
+    NoteModel demoSharedNote = models.stream()
+        .min(Comparator.comparingLong(NoteModel::getCreatedAt).thenComparing(NoteModel::getId))
+        .orElse(null);
+    if (demoSharedNote != null) {
+      demoSharedNote.setMockSharedState(true, DEMO_SHARED_BY, DEMO_SHARED_PERMISSION);
+    }
   }
 
   private void moveNoteForPinState(NoteModel note) {

@@ -2,8 +2,10 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
@@ -16,19 +18,25 @@
            fx:id="root"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
+           maxHeight="Infinity"
+           maxWidth="Infinity"
            minHeight="520.0"
            minWidth="620.0"
-           prefHeight="760.0"
-           prefWidth="780.0"
+           prefHeight="660.0"
+           prefWidth="730.0"
            styleClass="note-window-root">
   <children>
-    <StackPane fx:id="windowFrame">
+    <StackPane fx:id="windowFrame" maxHeight="Infinity" maxWidth="Infinity">
       <styleClass>
         <String fx:value="surface-shell" />
         <String fx:value="note-window" />
       </styleClass>
       <children>
-        <VBox fx:id="windowShell" spacing="0.0" styleClass="note-window-shell">
+        <VBox fx:id="windowShell"
+              maxHeight="Infinity"
+              maxWidth="Infinity"
+              spacing="0.0"
+              styleClass="note-window-shell">
           <children>
             <HBox fx:id="windowTitleBar"
                   alignment="CENTER_LEFT"
@@ -43,9 +51,39 @@
                 <String fx:value="note-window-title-bar" />
               </styleClass>
               <children>
+                <HBox alignment="CENTER_LEFT" spacing="6.0" styleClass="note-window-title-actions">
+                  <children>
+                    <ToggleButton fx:id="pinButton" mnemonicParsing="false" onAction="#togglePin" styleClass="note-top-icon-button">
+                      <graphic>
+                        <FontIcon iconLiteral="codicon-pinned:16" styleClass="toolbar-icon" />
+                      </graphic>
+                    </ToggleButton>
+                    <Button fx:id="colorButton" mnemonicParsing="false" onAction="#toggleColorPicker" styleClass="note-top-icon-button">
+                      <graphic>
+                        <FontIcon iconLiteral="codicon-color-mode:16" styleClass="toolbar-icon" />
+                      </graphic>
+                    </Button>
+                    <Button fx:id="tagButton" mnemonicParsing="false" onAction="#toggleTagSelector" styleClass="note-top-icon-button">
+                      <graphic>
+                        <FontIcon iconLiteral="codicon-tag:16" styleClass="toolbar-icon" />
+                      </graphic>
+                    </Button>
+                  </children>
+                </HBox>
                 <Region HBox.hgrow="ALWAYS" />
                 <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="title-controls-group">
                   <children>
+                    <StackPane fx:id="noteMenuButton"
+                               onMouseClicked="#toggleOverflowMenu"
+                               pickOnBounds="true">
+                      <styleClass>
+                        <String fx:value="title-icon-button" />
+                        <String fx:value="window-control-button" />
+                      </styleClass>
+                      <children>
+                        <FontIcon iconLiteral="codicon-ellipsis:16" styleClass="title-bar-icon" />
+                      </children>
+                    </StackPane>
                     <StackPane fx:id="windowMinimizeButton"
                                onMouseClicked="#minimizeWindow"
                                pickOnBounds="true">
@@ -61,7 +99,7 @@
                                onMouseClicked="#closeWindow"
                                pickOnBounds="true">
                       <styleClass>
-                        <String fx:value="title-close-button" />
+                        <String fx:value="note-window-close-button" />
                         <String fx:value="window-control-button" />
                       </styleClass>
                       <children>
@@ -72,15 +110,23 @@
                 </HBox>
               </children>
             </HBox>
-            <VBox fx:id="noteContentShell" spacing="0.0" styleClass="note-content-shell" VBox.vgrow="ALWAYS">
+            <VBox fx:id="noteContentShell"
+                  maxHeight="Infinity"
+                  maxWidth="Infinity"
+                  spacing="0.0"
+                  styleClass="note-content-shell"
+                  VBox.vgrow="ALWAYS">
               <children>
-                <fx:include fx:id="noteHeader" source="NoteHeader.fxml" />
                 <HBox fx:id="noteBodyShell"
                       fillHeight="true"
+                      maxHeight="Infinity"
+                      maxWidth="Infinity"
+                      minHeight="0.0"
                       styleClass="note-body-shell"
                       VBox.vgrow="ALWAYS">
                   <children>
                     <AnchorPane fx:id="noteSidebarSpace"
+                                maxHeight="Infinity"
                                 maxWidth="18.0"
                                 minWidth="18.0"
                                 prefWidth="18.0">
@@ -92,9 +138,35 @@
                                     AnchorPane.topAnchor="0.0" />
                       </children>
                     </AnchorPane>
-                    <VBox fx:id="noteBodyContent" spacing="18.0" styleClass="note-body-content">
+                    <VBox fx:id="noteBodyContent"
+                          maxHeight="Infinity"
+                          maxWidth="Infinity"
+                          spacing="18.0"
+                          styleClass="note-body-content">
                       <HBox.hgrow>ALWAYS</HBox.hgrow>
                       <children>
+                        <FlowPane fx:id="sharedInfoRow"
+                                  alignment="CENTER_LEFT"
+                                  hgap="8.0"
+                                  managed="false"
+                                  maxWidth="Infinity"
+                                  styleClass="note-shared-info-row"
+                                  vgap="8.0"
+                                  visible="false">
+                          <children>
+                            <HBox alignment="CENTER_LEFT" spacing="6.0" styleClass="note-shared-by-badge">
+                              <children>
+                                <FontIcon iconLiteral="codicon-live-share:12" styleClass="note-shared-icon" />
+                                <Label fx:id="sharedByLabel"
+                                       styleClass="note-shared-by-text"
+                                       text="Chia sẻ bởi Trần Minh" />
+                              </children>
+                            </HBox>
+                            <Label fx:id="sharedPermissionLabel"
+                                   styleClass="note-shared-permission-badge"
+                                   text="CHỈ XEM" />
+                          </children>
+                        </FlowPane>
                         <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="note-title-row">
                           <children>
                             <TextField fx:id="titleField"
@@ -125,7 +197,75 @@
             </VBox>
           </children>
         </VBox>
-        <StackPane fx:id="overlayLayer" pickOnBounds="true" />
+        <fx:include fx:id="colorPickerPopover" source="ColorPickerPopover.fxml" />
+        <fx:include fx:id="tagSelector" source="TagSelector.fxml" />
+        <AnchorPane fx:id="resizeHandleLayer"
+                    maxHeight="Infinity"
+                    maxWidth="Infinity"
+                    pickOnBounds="false">
+          <children>
+            <Region fx:id="resizeNorthHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.leftAnchor="8.0"
+                    AnchorPane.rightAnchor="8.0"
+                    AnchorPane.topAnchor="0.0" />
+            <Region fx:id="resizeSouthHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.bottomAnchor="0.0"
+                    AnchorPane.leftAnchor="8.0"
+                    AnchorPane.rightAnchor="8.0" />
+            <Region fx:id="resizeWestHandle"
+                    pickOnBounds="true"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.bottomAnchor="8.0"
+                    AnchorPane.leftAnchor="0.0"
+                    AnchorPane.topAnchor="8.0" />
+            <Region fx:id="resizeEastHandle"
+                    pickOnBounds="true"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.bottomAnchor="8.0"
+                    AnchorPane.rightAnchor="0.0"
+                    AnchorPane.topAnchor="8.0" />
+            <Region fx:id="resizeNorthWestHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.leftAnchor="0.0"
+                    AnchorPane.topAnchor="0.0" />
+            <Region fx:id="resizeNorthEastHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.rightAnchor="0.0"
+                    AnchorPane.topAnchor="0.0" />
+            <Region fx:id="resizeSouthWestHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.bottomAnchor="0.0"
+                    AnchorPane.leftAnchor="0.0" />
+            <Region fx:id="resizeSouthEastHandle"
+                    pickOnBounds="true"
+                    prefHeight="8.0"
+                    prefWidth="8.0"
+                    style="-fx-background-color: transparent;"
+                    AnchorPane.bottomAnchor="0.0"
+                    AnchorPane.rightAnchor="0.0" />
+          </children>
+        </AnchorPane>
+        <StackPane fx:id="overlayLayer"
+                   maxHeight="Infinity"
+                   maxWidth="Infinity"
+                   pickOnBounds="true" />
       </children>
     </StackPane>
   </children>

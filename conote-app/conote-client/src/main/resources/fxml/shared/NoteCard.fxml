@@ -10,8 +10,8 @@
 <?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.text.TextFlow?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.TextFlow?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <VBox fx:controller="com.conote.client.controller.NoteCardController"
@@ -28,12 +28,26 @@
     <HBox alignment="TOP_LEFT" spacing="8.0">
       <children>
         <Label fx:id="titleLabel" styleClass="note-card-title" text="Note title" HBox.hgrow="ALWAYS" />
-        <TextField fx:id="titleField" managed="false" styleClass="note-card-title-field" visible="false" HBox.hgrow="ALWAYS" />
+        <TextField fx:id="titleField"
+                   managed="false"
+                   styleClass="note-card-title-field"
+                   visible="false"
+                   HBox.hgrow="ALWAYS" />
         <Region HBox.hgrow="ALWAYS" />
         <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="note-card-actions">
           <children>
-            <Button fx:id="pinButton" managed="false" mnemonicParsing="false" onAction="#togglePin" styleClass="note-icon-button" visible="false" />
-            <Button fx:id="openWindowButton" managed="false" mnemonicParsing="false" onAction="#openNoteWindow" styleClass="note-icon-button" visible="false">
+            <Button fx:id="pinButton"
+                    managed="false"
+                    mnemonicParsing="false"
+                    onAction="#togglePin"
+                    styleClass="note-icon-button"
+                    visible="false" />
+            <Button fx:id="openWindowButton"
+                    managed="false"
+                    mnemonicParsing="false"
+                    onAction="#openNoteWindow"
+                    styleClass="note-icon-button"
+                    visible="false">
               <graphic>
                 <FontIcon iconLiteral="codicon-link-external:15" styleClass="card-action-icon" />
               </graphic>
@@ -44,25 +58,49 @@
     </HBox>
     <StackPane fx:id="textContentStack" managed="false" visible="false">
       <children>
-        <Label fx:id="previewLabel" styleClass="note-card-preview" text="Preview" wrapText="true" StackPane.alignment="TOP_LEFT" />
-        <TextFlow fx:id="richPreviewFlow" managed="false" visible="false" StackPane.alignment="TOP_LEFT" />
-        <VBox fx:id="richTextEditorBox" managed="false" visible="false" StackPane.alignment="TOP_LEFT" />
-        <VBox fx:id="textEditorBox" managed="false" visible="false" StackPane.alignment="TOP_LEFT">
+        <Label fx:id="previewLabel"
+               styleClass="note-card-preview"
+               text="Preview"
+               wrapText="true"
+               StackPane.alignment="TOP_LEFT" />
+        <TextFlow fx:id="richPreviewFlow"
+                  managed="false"
+                  visible="false"
+                  StackPane.alignment="TOP_LEFT" />
+        <VBox fx:id="richTextEditorBox"
+              managed="false"
+              visible="false"
+              StackPane.alignment="TOP_LEFT" />
+        <VBox fx:id="textEditorBox"
+              managed="false"
+              visible="false"
+              StackPane.alignment="TOP_LEFT">
           <children>
-            <TextArea fx:id="quickTextArea" prefRowCount="3" styleClass="quick-note-textarea" wrapText="true" />
+            <TextArea fx:id="quickTextArea"
+                      prefRowCount="3"
+                      styleClass="quick-note-textarea"
+                      wrapText="true" />
           </children>
         </VBox>
       </children>
     </StackPane>
     <VBox fx:id="checklistPreviewBox" managed="false" spacing="8.0" visible="false" />
-    <StackPane fx:id="expandedContainer" managed="false" maxHeight="0.0" opacity="0.0" visible="false">
+    <StackPane fx:id="expandedContainer"
+               managed="false"
+               maxHeight="0.0"
+               opacity="0.0"
+               visible="false">
       <children>
         <VBox fx:id="expandedContent" spacing="10.0" styleClass="expanded-card-body">
           <children>
             <VBox fx:id="checklistEditorBox" managed="false" spacing="8.0" visible="false">
               <children>
                 <VBox fx:id="checklistItemsBox" spacing="8.0" />
-                <Button fx:id="addChecklistItemButton" mnemonicParsing="false" onAction="#addChecklistItem" styleClass="inline-link-button" text="+ Add item" />
+                <Button fx:id="addChecklistItemButton"
+                        mnemonicParsing="false"
+                        onAction="#addChecklistItem"
+                        styleClass="inline-link-button"
+                        text="+ Add item" />
               </children>
             </VBox>
           </children>
@@ -72,22 +110,18 @@
     <VBox spacing="4.0" styleClass="note-card-meta">
       <children>
         <FlowPane fx:id="tagsFlow" hgap="8.0" vgap="8.0" />
-        <HBox alignment="CENTER_RIGHT" styleClass="note-card-date-row">
+        <HBox alignment="CENTER_RIGHT" spacing="6.0" styleClass="note-card-date-row">
           <children>
             <Region HBox.hgrow="ALWAYS" />
-            <HBox fx:id="sharedSourceBadge"
-                  alignment="CENTER"
+            <HBox fx:id="sharedInfoRow"
+                  alignment="CENTER_LEFT"
                   managed="false"
-                  maxWidth="96.0"
-                  spacing="3.0"
-                  styleClass="note-source-badge"
+                  spacing="5.0"
+                  styleClass="note-card-shared-badge"
                   visible="false">
               <children>
-                <FontIcon iconLiteral="codicon-account:11" styleClass="note-source-badge-icon" />
-                <Label fx:id="sharedSourceLabel"
-                       maxWidth="72.0"
-                       styleClass="note-source-badge-label"
-                       text="Trần Minh" />
+                <FontIcon iconLiteral="codicon-live-share:11" styleClass="note-shared-icon" />
+                <Label fx:id="sharedByLabel" styleClass="note-card-shared-name" text="Tran Minh" />
               </children>
             </HBox>
             <Label fx:id="dateLabel" styleClass="note-card-date" text="Apr 17" />
