@@ -29,12 +29,12 @@ public class AuthController {
             User createdUser = authService.register(request);
 
             Map<String, Object> data = Map.of(
+                    "userId", createdUser.getUserId(),
                     "userName", createdUser.getUserName(),
                     "email", createdUser.getEmail(),
                     "fullName", createdUser.getFullName(),
                     "verified", createdUser.getVerified(),
-                    "active", createdUser.getActive(),
-                    "passwordHashPreview", createdUser.getPasswordHash().substring(0, 10) + "..."
+                    "active", createdUser.getActive()
             );
 
             JsonResponseWriter.send(

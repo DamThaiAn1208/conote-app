@@ -2,16 +2,23 @@ package com.conote.server.service;
 
 import com.conote.common.dto.auth.RegisterRequest;
 import com.conote.common.model.User;
+import com.conote.server.dao.UserDao;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.time.LocalDateTime;
 
 public class AuthService {
+    private final UserDao userDao = new UserDao();
 
     public User register(RegisterRequest request) {
         validateRegisterRequest(request);
 
         String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        if (userDao.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
         String passwordHash = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
 
         User user = new User();
@@ -27,7 +34,7 @@ public class AuthService {
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
-        return user;
+        return userDao.save(user);
     }
 
     private void validateRegisterRequest(RegisterRequest request) {
