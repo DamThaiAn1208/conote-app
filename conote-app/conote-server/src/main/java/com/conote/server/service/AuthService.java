@@ -1,9 +1,11 @@
 package com.conote.server.service;
 
 import com.conote.common.dto.auth.LoginRequest;
+import com.conote.common.dto.auth.LoginResponse;
 import com.conote.common.dto.auth.RegisterRequest;
 import com.conote.common.model.User;
 import com.conote.server.dao.UserDao;
+import com.conote.server.security.AuthSessionManager;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.time.LocalDateTime;
@@ -11,7 +13,7 @@ import java.time.LocalDateTime;
 public class AuthService {
     private final UserDao userDao = new UserDao();
 
-    public User login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         validateLoginRequest(request);
 
         String normalizedEmail = request.getEmail().trim().toLowerCase();
@@ -32,7 +34,17 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        return user;
+        String token = AuthSessionManager.createSession(user.getUserId());
+
+        return new LoginResponse(
+                token,
+                user.getUserId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getVerified(),
+                user.getActive()
+        );
     }
 
     private void validateLoginRequest(LoginRequest request) {

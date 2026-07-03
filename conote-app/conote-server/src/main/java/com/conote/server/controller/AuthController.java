@@ -2,6 +2,7 @@ package com.conote.server.controller;
 
 import com.conote.common.dto.ApiResponse;
 import com.conote.common.dto.auth.LoginRequest;
+import com.conote.common.dto.auth.LoginResponse;
 import com.conote.common.dto.auth.RegisterRequest;
 import com.conote.common.model.User;
 import com.conote.server.service.AuthService;
@@ -70,21 +71,12 @@ public class AuthController {
 
         try {
             LoginRequest request = JsonRequestReader.read(exchange, LoginRequest.class);
-            User user = authService.login(request);
-
-            Map<String, Object> data = Map.of(
-                    "userId", user.getUserId(),
-                    "userName", user.getUserName(),
-                    "email", user.getEmail(),
-                    "fullName", user.getFullName(),
-                    "verified", user.getVerified(),
-                    "active", user.getActive()
-            );
+            LoginResponse loginResponse = authService.login(request);
 
             JsonResponseWriter.send(
                     exchange,
                     200,
-                    ApiResponse.success("Login successfully", data)
+                    ApiResponse.success("Login successfully", loginResponse)
             );
         } catch (IllegalArgumentException exception) {
             JsonResponseWriter.send(
