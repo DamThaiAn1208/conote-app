@@ -1,5 +1,6 @@
 package com.conote.server.service;
 
+import com.conote.common.dto.auth.LoginRequest;
 import com.conote.common.dto.auth.RegisterRequest;
 import com.conote.common.model.User;
 import com.conote.server.dao.UserDao;
@@ -9,6 +10,44 @@ import java.time.LocalDateTime;
 
 public class AuthService {
     private final UserDao userDao = new UserDao();
+
+    public User login(LoginRequest request) {
+        validateLoginRequest(request);
+
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        User user = userDao.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new IllegalArgumentException("Account is inactive");
+        }
+
+        boolean passwordMatches = BCrypt.checkpw(
+                request.getPassword(),
+                user.getPasswordHash()
+        );
+
+        if (!passwordMatches) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        return user;
+    }
+
+    private void validateLoginRequest(LoginRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Request body is required");
+        }
+
+        if (isBlank(request.getEmail())) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (isBlank(request.getPassword())) {
+            throw new IllegalArgumentException("Password is required");
+        }
+    }
 
     public User register(RegisterRequest request) {
         validateRegisterRequest(request);

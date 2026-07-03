@@ -38,6 +38,7 @@ public class HttpServerBootstrap {
         server.createContext("/api/health", healthController::handle);
         server.createContext("/api/dev/echo", devEchoController::handle);
         server.createContext("/api/auth/register", authController::handleRegister);
+        server.createContext("/api/auth/login", authController::handleLogin);
         server.createContext("/api/health/database", databaseHealthController::handle);
 
         server.setExecutor(null);
