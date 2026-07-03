@@ -12,8 +12,14 @@
         <class>com.conote.common.model.Share</class>
         <class>com.conote.common.model.EmailOtp</class>
         <properties>
-            <property name="hibernate.archive.autodetection" value="class"/>
-            <property name="hibernate.show_sql" value="false"/>
+            <property name="jakarta.persistence.jdbc.driver" value="org.mariadb.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mariadb://localhost:3306/conote_db"/>
+            <property name="jakarta.persistence.jdbc.user" value="root"/>
+            <property name="jakarta.persistence.jdbc.password" value="sapassword"/>
+
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MariaDBDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
         </properties>
     </persistence-unit>
