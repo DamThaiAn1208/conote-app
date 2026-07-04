@@ -5,6 +5,7 @@ import com.conote.common.dto.auth.LoginRequest;
 import com.conote.common.dto.auth.LoginResponse;
 import com.conote.common.dto.auth.RegisterRequest;
 import com.conote.common.model.User;
+import com.conote.server.security.AuthHeaderUtil;
 import com.conote.server.service.AuthService;
 import com.conote.server.util.JsonRequestReader;
 import com.conote.server.util.JsonResponseWriter;
@@ -82,6 +83,49 @@ public class AuthController {
             JsonResponseWriter.send(
                     exchange,
                     400,
+                    ApiResponse.fail(exception.getMessage())
+            );
+        } catch (Exception exception) {
+            JsonResponseWriter.send(
+                    exchange,
+                    500,
+                    ApiResponse.fail("Internal server error")
+            );
+        }
+    }
+
+    public void handleMe(HttpExchange exchange) throws IOException {
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            JsonResponseWriter.send(
+                    exchange,
+                    405,
+                    ApiResponse.fail("Method Not Allowed")
+            );
+            return;
+        }
+
+        try {
+            String token = AuthHeaderUtil.extractBearerToken(exchange);
+            User user = authService.getCurrentUser(token);
+
+            Map<String, Object> data = Map.of(
+                    "userId", user.getUserId(),
+                    "userName", user.getUserName(),
+                    "email", user.getEmail(),
+                    "fullName", user.getFullName(),
+                    "verified", user.getVerified(),
+                    "active", user.getActive()
+            );
+
+            JsonResponseWriter.send(
+                    exchange,
+                    200,
+                    ApiResponse.success("Current user loaded successfully", data)
+            );
+        } catch (IllegalArgumentException exception) {
+            JsonResponseWriter.send(
+                    exchange,
+                    401,
                     ApiResponse.fail(exception.getMessage())
             );
         } catch (Exception exception) {

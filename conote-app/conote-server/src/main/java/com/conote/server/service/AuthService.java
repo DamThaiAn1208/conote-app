@@ -122,6 +122,14 @@ public class AuthService {
         return email;
     }
 
+    public User getCurrentUser(String token) {
+        Long userId = AuthSessionManager.findUserIdByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+
+        return userDao.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
     private String normalizeFullName(String fullName) {
         return fullName == null ? "" : fullName.trim();
     }

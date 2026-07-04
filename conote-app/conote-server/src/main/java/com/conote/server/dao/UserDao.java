@@ -52,4 +52,15 @@ public class UserDao {
     public boolean existsByEmail(String email) {
         return findByEmail(email).isPresent();
     }
+
+    public Optional<User> findById(Long userId) {
+        EntityManager entityManager = EntityManagerUtil.getEntityManager();
+
+        try {
+            User user = entityManager.find(User.class, userId);
+            return Optional.ofNullable(user);
+        } finally {
+            entityManager.close();
+        }
+    }
 }
