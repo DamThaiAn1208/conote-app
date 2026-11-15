@@ -20,6 +20,7 @@ import com.conote.client.model.ShareMember;
 import com.conote.client.model.SortMode;
 import com.conote.client.util.RichTextContentCodec;
 import com.conote.common.enums.NoteType;
+import com.conote.common.dto.auth.AuthDtos;
 import com.conote.common.enums.SharePermission;
 import com.conote.common.enums.ShareStatus;
 import com.conote.common.model.Note;
@@ -57,8 +58,6 @@ public class CoNoteStore {
   private static final String DEFAULT_LOCAL_USER_EMAIL = "local@conote.app";
   private static final String DEFAULT_LOCAL_USER_KEY = DEFAULT_LOCAL_USER_EMAIL;
   private static final long NOTE_ORDER_GAP = 1000L;
-  private static final String DEMO_SHARED_BY = "Trần Minh";
-  private static final String DEMO_SHARED_PERMISSION = "view";
 
   private final ObservableList<NoteModel> notes =
       FXCollections.observableArrayList(note -> note.extractor());
@@ -70,11 +69,12 @@ public class CoNoteStore {
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(AppTheme.LIGHT);
   private final ObjectProperty<String> expandedNoteId = new SimpleObjectProperty<>();
   private final BooleanProperty loading = new SimpleBooleanProperty(true);
-  private final BooleanProperty dockOnDesktop = new SimpleBooleanProperty(true);
+  private final BooleanProperty dockOnDesktop = new SimpleBooleanProperty(false);
   private final ObservableSet<String> selectedTags = FXCollections.observableSet();
   private final ObservableSet<NoteColor> selectedColors = FXCollections.observableSet();
 
   private final JsonStore jsonStore;
+  private final AuthDtos.UserView authenticatedUser;
   private final NoteCacheStore noteCacheStore;
   private final NoteOrderCacheStore noteOrderCacheStore;
   private final UiStateStore uiStateStore;
@@ -85,17 +85,35 @@ public class CoNoteStore {
   private UiState uiState;
 
   public CoNoteStore() {
+    this(null);
+  }
+
+  public CoNoteStore(AuthDtos.UserView authenticatedUser) {
     ClientStoragePaths.init();
+    if (authenticatedUser != null && authenticatedUser.userId() < 1) {
+      throw new IllegalArgumentException("Authenticated user ID must be positive");
+    }
+    this.authenticatedUser = authenticatedUser;
     jsonStore = new JsonStore();
-    noteCacheStore = new NoteCacheStore(jsonStore);
-    noteOrderCacheStore = new NoteOrderCacheStore(jsonStore);
-    uiStateStore = new UiStateStore(jsonStore);
-    syncQueueStore = new SyncQueueStore(jsonStore);
+    noteCacheStore = authenticatedUser == null ? new NoteCacheStore(jsonStore)
+        : new NoteCacheStore(jsonStore, ClientStoragePaths.userNoteCacheFile(authenticatedUser.userId()));
+    noteOrderCacheStore = authenticatedUser == null ? new NoteOrderCacheStore(jsonStore)
+        : new NoteOrderCacheStore(jsonStore, ClientStoragePaths.userNoteOrderCacheFile(authenticatedUser.userId()));
+    uiStateStore = authenticatedUser == null ? new UiStateStore(jsonStore)
+        : new UiStateStore(jsonStore, ClientStoragePaths.userUiStateFile(authenticatedUser.userId()));
+    syncQueueStore = authenticatedUser == null ? new SyncQueueStore(jsonStore)
+        : new SyncQueueStore(jsonStore, ClientStoragePaths.userSyncQueueFile(authenticatedUser.userId()));
 
     bindFiltering();
     bindSorting();
     loadUiState();
-    loadNotesFromLocalCache();
+    // Authenticated notes are populated only after the server has answered.
+    // Never treat a per-user disk cache as an authoritative server response.
+    if (authenticatedUser == null) {
+      loadNotesFromLocalCache();
+    } else {
+      loading.set(false);
+    }
     bindUiStatePersistence();
   }
 
@@ -115,6 +133,7 @@ public class CoNoteStore {
   private void loadUiState() {
     uiState = uiStateStore.load();
     theme.set(resolveTheme(uiState.getTheme()));
+    dockOnDesktop.set(uiState.isDockOnDesktop());
     searchQuery.set(uiState.getLatestSearchKeyword() == null ? "" : uiState.getLatestSearchKeyword());
     sortMode.set(resolveSortMode(uiState.getSortMode()));
     sourceFilter.set(resolveSourceFilter(uiState.getSourceFilter()));
@@ -154,8 +173,6 @@ public class CoNoteStore {
       noteEntitiesById.put(note.getNoteId(), note);
       loadedModels.add(toNoteModel(note));
     }
-    applyMockSharedDemoState(loadedModels);
-
     notes.setAll(loadedModels);
     applySortModeOrdering(sortMode.get());
     loading.set(false);
@@ -166,6 +183,7 @@ public class CoNoteStore {
     sortMode.addListener((obs, oldValue, newValue) -> saveUiState());
     sourceFilter.addListener((obs, oldValue, newValue) -> saveUiState());
     theme.addListener((obs, oldValue, newValue) -> saveUiState());
+    dockOnDesktop.addListener((obs, oldValue, newValue) -> saveUiState());
     selectedTags.addListener((SetChangeListener<String>) change -> saveUiState());
     selectedColors.addListener((SetChangeListener<NoteColor>) change -> saveUiState());
   }
@@ -257,9 +275,6 @@ public class CoNoteStore {
     sortOrderByNoteId.put(saved.getNoteId(), nextSortOrderForCreatedNote());
 
     NoteModel model = toNoteModel(saved);
-    if (notes.isEmpty()) {
-      model.setMockSharedState(true, DEMO_SHARED_BY, DEMO_SHARED_PERMISSION);
-    }
     insertCreatedNote(model);
     expandedNoteId.set(model.getId());
     enqueueSync(saved, SyncActionType.CREATE_NOTE);
@@ -462,6 +477,12 @@ public class CoNoteStore {
         reindexSortOrdersFromNotes();
         persistNoteOrdersAndEnqueue();
       }
+    }
+  }
+
+  public void toggleFavorite(NoteModel note) {
+    if (note != null) {
+      note.setFavorite(!note.isFavorite());
     }
   }
 
@@ -722,19 +743,6 @@ public class CoNoteStore {
     applySortModeOrdering(sortMode.get());
   }
 
-  private void applyMockSharedDemoState(List<NoteModel> models) {
-    if (models == null || models.isEmpty()) {
-      return;
-    }
-
-    NoteModel demoSharedNote = models.stream()
-        .min(Comparator.comparingLong(NoteModel::getCreatedAt).thenComparing(NoteModel::getId))
-        .orElse(null);
-    if (demoSharedNote != null) {
-      demoSharedNote.setMockSharedState(true, DEMO_SHARED_BY, DEMO_SHARED_PERMISSION);
-    }
-  }
-
   private void moveNoteForPinState(NoteModel note) {
     int currentIndex = notes.indexOf(note);
     if (currentIndex < 0) {
@@ -837,7 +845,18 @@ public class CoNoteStore {
   }
 
   private String currentUserKey() {
-    return DEFAULT_LOCAL_USER_KEY;
+    return authenticatedUser == null ? DEFAULT_LOCAL_USER_KEY
+        : Long.toString(authenticatedUser.userId());
+  }
+
+  public String getCurrentUserDisplayName() {
+    return authenticatedUser == null ? DEFAULT_LOCAL_USER_NAME
+        : (authenticatedUser.fullName() == null || authenticatedUser.fullName().isBlank()
+            ? authenticatedUser.userName() : authenticatedUser.fullName());
+  }
+
+  public String getCurrentUserEmail() {
+    return authenticatedUser == null ? DEFAULT_LOCAL_USER_EMAIL : authenticatedUser.email();
   }
 
   private int firstUnpinnedIndex() {
@@ -1026,9 +1045,16 @@ public class CoNoteStore {
 
   private User buildDefaultOwner() {
     User owner = new User();
-    owner.setUserName("local-user");
-    owner.setEmail(DEFAULT_LOCAL_USER_EMAIL);
-    owner.setFullName(DEFAULT_LOCAL_USER_NAME);
+    if (authenticatedUser == null) {
+      owner.setUserName("local-user");
+      owner.setEmail(DEFAULT_LOCAL_USER_EMAIL);
+      owner.setFullName(DEFAULT_LOCAL_USER_NAME);
+    } else {
+      owner.setUserId(authenticatedUser.userId());
+      owner.setUserName(authenticatedUser.userName());
+      owner.setEmail(authenticatedUser.email());
+      owner.setFullName(authenticatedUser.fullName());
+    }
     owner.setActive(true);
     owner.setVerified(true);
     LocalDateTime now = LocalDateTime.now();
@@ -1162,6 +1188,7 @@ public class CoNoteStore {
     uiState.setWindowWidth(getWindowWidth());
     uiState.setWindowHeight(getWindowHeight());
     uiState.setTheme(getTheme().name());
+    uiState.setDockOnDesktop(dockOnDesktop.get());
     uiState.setLatestSearchKeyword(searchQuery.get());
     uiState.setSortMode(sortMode.get() == null ? SortMode.NEWEST.name() : sortMode.get().name());
     uiState.setSourceFilter(sourceFilter.get() == null ? NoteSourceFilter.ALL.name() : sourceFilter.get().name());

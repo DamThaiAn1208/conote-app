@@ -109,6 +109,9 @@ public class NoteWindowController {
   private ToggleButton pinButton;
 
   @FXML
+  private ToggleButton favoriteButton;
+
+  @FXML
   private Button colorButton;
 
   @FXML
@@ -182,6 +185,7 @@ public class NoteWindowController {
   @FXML
   private void initialize() {
     MotionSupport.installButtonMotion(pinButton);
+    MotionSupport.installButtonMotion(favoriteButton);
     MotionSupport.installButtonMotion(colorButton);
     MotionSupport.installButtonMotion(tagButton);
     MotionSupport.installButtonMotion(noteMenuButton);
@@ -233,6 +237,9 @@ public class NoteWindowController {
 
     pinButton.setSelected(note.isPinned());
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> pinButton.setSelected(newValue));
+    favoriteButton.setSelected(note.isFavorite());
+    note.favoriteProperty().addListener((obs, oldValue, newValue) ->
+        favoriteButton.setSelected(newValue));
     colorPickerPopoverController.setContext(note, store);
     tagSelectorController.setContext(note, store);
     titleField.setText(note.getTitle());
@@ -242,9 +249,9 @@ public class NoteWindowController {
         titleField.setText(newValue);
       }
     });
-    note.mockSharedProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
-    note.mockSharedByProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
-    note.mockSharePermissionProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.sharedProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.sharePermissionProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
     textNoteEditorController.setContext(note, store);
     checklistNoteEditorController.setContext(note, store);
     noteToolbarController.setSidebarStateListener(this::setSidebarCollapsed);
@@ -323,6 +330,13 @@ public class NoteWindowController {
   @FXML
   private void togglePin() {
     store.togglePin(note);
+    pinButton.setSelected(note.isPinned());
+  }
+
+  @FXML
+  private void toggleFavorite() {
+    store.toggleFavorite(note);
+    favoriteButton.setSelected(note.isFavorite());
   }
 
   @FXML
@@ -613,20 +627,21 @@ public class NoteWindowController {
   }
 
   private void refreshSharedInfo() {
-    boolean visible = note != null && note.hasMockSharedInfo();
+    boolean visible = note != null && note.isShared();
     sharedInfoRow.setVisible(visible);
     sharedInfoRow.setManaged(visible);
     if (!visible) {
       return;
     }
 
-    sharedByLabel.setText(note.getMockSharedDisplayText());
-    sharedPermissionLabel.setText(note.getMockPermissionDisplayText());
+    sharedByLabel.setText("Chia sẻ bởi " + note.getOwnerName());
+    boolean canEdit = note.getSharePermission() == com.conote.common.enums.SharePermission.EDIT;
+    sharedPermissionLabel.setText(canEdit ? "CÓ THỂ SỬA" : "CHỈ XEM");
     sharedPermissionLabel.getStyleClass().removeAll(
         SHARED_PERMISSION_VIEW_CLASS,
         SHARED_PERMISSION_EDIT_CLASS);
     sharedPermissionLabel.getStyleClass().add(
-        note.mockShareCanEdit() ? SHARED_PERMISSION_EDIT_CLASS : SHARED_PERMISSION_VIEW_CLASS);
+        canEdit ? SHARED_PERMISSION_EDIT_CLASS : SHARED_PERMISSION_VIEW_CLASS);
   }
 
   private void flushPendingChanges() {
@@ -640,9 +655,17 @@ public class NoteWindowController {
 
   private void refreshEditorVisibility() {
     boolean isText = note.getType() == NoteType.TEXT;
+    boolean readOnly = note.isReadOnlyShared();
+    titleField.setEditable(!readOnly);
+    colorButton.setDisable(readOnly);
+    tagButton.setDisable(note.isShared());
+    textNoteEditorController.setReadOnly(readOnly);
+    checklistNoteEditorController.setReadOnly(readOnly);
+    noteMenuButton.setVisible(!note.isShared());
+    noteMenuButton.setManaged(!note.isShared());
     textNoteEditorController.setVisible(isText);
     checklistNoteEditorController.setVisible(!isText);
-    refreshToolbarVisibility(isText);
+    refreshToolbarVisibility(isText && !readOnly);
   }
 
   private void refreshFooterTimes() {

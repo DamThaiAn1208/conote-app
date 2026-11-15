@@ -100,6 +100,45 @@ public final class ClientStoragePaths {
     return syncQueueFile;
   }
 
+  /** Authenticated cache is isolated by server user ID; legacy local files stay untouched. */
+  public static Path userNoteCacheFile(long userId) {
+    return userFile(userId, "cache", NOTE_CACHE_FILE_NAME, "[]");
+  }
+
+  /** Server-acknowledged DTO snapshot; separate from the old local note entity cache. */
+  public static Path userServerSnapshotFile(long userId) {
+    if (userId < 1) throw new IllegalArgumentException("userId must be positive");
+    return appDir().resolve("users").resolve(Long.toString(userId))
+        .resolve("cache").resolve("serverSnapshot.json");
+  }
+
+  public static Path userNoteOrderCacheFile(long userId) {
+    return userFile(userId, "cache", NOTE_ORDER_CACHE_FILE_NAME, "[]");
+  }
+
+  public static Path userUiStateFile(long userId) {
+    return userFile(userId, "cache", UI_STATE_FILE_NAME, "{}");
+  }
+
+  public static Path userSyncQueueFile(long userId) {
+    return userFile(userId, "pending", SYNC_QUEUE_FILE_NAME, "[]");
+  }
+
+  private static Path userFile(long userId, String category, String fileName, String initialContents) {
+    if (userId < 1) {
+      throw new IllegalArgumentException("userId must be positive");
+    }
+    init();
+    Path file = appDir.resolve("users").resolve(Long.toString(userId))
+        .resolve(category).resolve(fileName);
+    try {
+      ensureFile(file, initialContents);
+    } catch (IOException exception) {
+      throw new IllegalStateException("Unable to initialize user cache: " + userId, exception);
+    }
+    return file;
+  }
+
   private static Path resolveAppDirectory() {
     String storageOverride = System.getProperty(STORAGE_DIRECTORY_OVERRIDE_PROPERTY);
     if (storageOverride != null && !storageOverride.isBlank()) {

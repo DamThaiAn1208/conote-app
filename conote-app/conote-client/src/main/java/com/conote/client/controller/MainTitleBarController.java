@@ -2,6 +2,7 @@ package com.conote.client.controller;
 
 import com.conote.client.app.ClientApplication;
 import com.conote.client.service.CoNoteStore;
+import com.conote.client.service.ServerBackedCoNoteStore;
 import com.conote.client.util.LoadedView;
 import com.conote.client.util.ViewLoader;
 import javafx.animation.PauseTransition;
@@ -9,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -25,6 +27,9 @@ public class MainTitleBarController {
 
   @FXML
   private StackPane menuButton;
+
+  @FXML
+  private Button refreshButton;
 
   @FXML
   private StackPane minimizeButton;
@@ -49,6 +54,8 @@ public class MainTitleBarController {
   public void setContext(CoNoteStore store, MainWindowController mainController) {
     this.store = store;
     this.mainController = mainController;
+    refreshButton.setVisible(store instanceof ServerBackedCoNoteStore);
+    refreshButton.setManaged(refreshButton.isVisible());
     initializeUserMenuPopup();
   }
 
@@ -104,6 +111,12 @@ public class MainTitleBarController {
     if (stage != null) {
       stage.close();
     }
+  }
+
+  @FXML
+  private void refreshNotes() {
+    hideMenu();
+    if (mainController != null) mainController.reloadFromServer();
   }
 
   public void hideMenu() {

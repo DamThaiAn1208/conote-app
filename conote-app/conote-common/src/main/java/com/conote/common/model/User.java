@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "uq_users_email", columnNames = "email"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,31 +30,31 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "user_name")
+    @Column(name = "user_name", length = 80)
     private String userName;
 
-    @Column
+    @Column(nullable = false, length = 254)
     private String email;
 
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = false, length = 60)
     private String passwordHash;
 
-    @Column(name = "full_name")
+    @Column(name = "full_name", length = 120)
     private String fullName;
 
-    @Column
+    @Column(length = 512)
     private String avatar;
 
-    @Column(name = "is_verified")
+    @Column(name = "is_verified", nullable = false)
     private Boolean verified;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean active;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)

@@ -1,0 +1,12 @@
+package com.conote.common.dto.protocol;
+
+/** Operations in the version 1 TCP protocol. */
+public enum Operation {
+    PING, ECHO,
+    AUTH_REGISTER, AUTH_LOGIN, AUTH_ME, AUTH_LOGOUT,
+    NOTE_CREATE, NOTE_LIST, NOTE_GET, NOTE_UPDATE, NOTE_DELETE,
+    NOTE_STATE_SET, NOTE_REORDER,
+    TAG_CREATE, TAG_LIST, TAG_RENAME, TAG_DELETE, TAG_ATTACH, TAG_DETACH,
+    SHARE_LIST, SHARE_CREATE, SHARE_UPDATE, SHARE_REVOKE,
+    SYNC_SNAPSHOT
+}

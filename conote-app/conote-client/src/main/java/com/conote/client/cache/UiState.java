@@ -11,6 +11,7 @@ public class UiState {
   private String selectedFilter = "";
   private String sortMode = "NEWEST";
   private String sourceFilter = "ALL";
+  private boolean dockOnDesktop;
   private List<String> selectedTags = new ArrayList<>();
   private List<String> selectedColors = new ArrayList<>();
 
@@ -64,6 +65,14 @@ public class UiState {
 
   public String getSourceFilter() {
     return sourceFilter;
+  }
+
+  public boolean isDockOnDesktop() {
+    return dockOnDesktop;
+  }
+
+  public void setDockOnDesktop(boolean dockOnDesktop) {
+    this.dockOnDesktop = dockOnDesktop;
   }
 
   public void setSourceFilter(String sourceFilter) {

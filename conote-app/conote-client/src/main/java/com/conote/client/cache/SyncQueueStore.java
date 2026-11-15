@@ -2,6 +2,7 @@ package com.conote.client.cache;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.LocalDateTime;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -12,19 +13,25 @@ public class SyncQueueStore {
   };
 
   private final JsonStore jsonStore;
+  private final Path filePath;
 
   public SyncQueueStore() {
     this(new JsonStore());
   }
 
   public SyncQueueStore(JsonStore jsonStore) {
+    this(jsonStore, ClientStoragePaths.syncQueueFile());
+  }
+
+  public SyncQueueStore(JsonStore jsonStore, Path filePath) {
     ClientStoragePaths.init();
     this.jsonStore = jsonStore;
+    this.filePath = java.util.Objects.requireNonNull(filePath, "filePath");
   }
 
   public List<PendingSyncItem> findAll() {
     List<PendingSyncItem> items =
-        jsonStore.read(ClientStoragePaths.syncQueueFile(), SYNC_ITEM_LIST_TYPE, ArrayList::new);
+        jsonStore.read(filePath, SYNC_ITEM_LIST_TYPE, ArrayList::new);
     List<PendingSyncItem> sanitized = new ArrayList<>();
     for (PendingSyncItem item : items) {
       if (item != null) {
@@ -93,7 +100,7 @@ public class SyncQueueStore {
   }
 
   private void writeAll(List<PendingSyncItem> items) {
-    jsonStore.write(ClientStoragePaths.syncQueueFile(), items == null ? List.of() : items);
+    jsonStore.write(filePath, items == null ? List.of() : items);
   }
 
   private PendingSyncItem sanitize(PendingSyncItem item) {

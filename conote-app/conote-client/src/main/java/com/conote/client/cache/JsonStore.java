@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.StandardCopyOption;
 import java.util.function.Supplier;
 
 public class JsonStore {
@@ -65,17 +68,49 @@ public class JsonStore {
   }
 
   public void write(Path filePath, Object value) {
+    if (filePath == null) {
+      return;
+    }
+    Path target = filePath.toAbsolutePath().normalize();
+    Path temporary = null;
     try {
-      if (filePath == null) {
-        return;
-      }
-
-      Files.createDirectories(filePath.getParent());
-      objectMapper
-          .writerWithDefaultPrettyPrinter()
-          .writeValue(filePath.toFile(), value);
+      byte[] json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(value);
+      Files.createDirectories(target.getParent());
+      temporary = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
+      Files.write(temporary, json);
+      replaceWithRetry(temporary, target);
     } catch (IOException exception) {
       throw new IllegalStateException("Unable to write JSON file: " + filePath, exception);
+    } finally {
+      if (temporary != null) {
+        try {
+          Files.deleteIfExists(temporary);
+        } catch (IOException ignored) {
+          // A failed cleanup does not change the result of the cache write.
+        }
+      }
+    }
+  }
+
+  private void replaceWithRetry(Path temporary, Path target) throws IOException {
+    for (int attempt = 0; attempt < 5; attempt++) {
+      try {
+        try {
+          Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE,
+              StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException exception) {
+          Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return;
+      } catch (AccessDeniedException exception) {
+        if (attempt == 4) throw exception;
+        try {
+          Thread.sleep(20L * (attempt + 1));
+        } catch (InterruptedException interrupted) {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while replacing cache file", interrupted);
+        }
+      }
     }
   }
 

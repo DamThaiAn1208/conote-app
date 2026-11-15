@@ -5,9 +5,8 @@ import com.conote.common.enums.ShareStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.JoinColumn;
@@ -26,48 +25,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "notes")
+@Table(name = "notes", indexes = {
+        @Index(name = "idx_notes_owner_deleted", columnList = "owner_id,is_delete"),
+        @Index(name = "idx_notes_updated", columnList = "updated_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Note {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "note_id")
+    // Assigned UUID preserves local cache IDs during the explicit import flow.
+    @Column(name = "note_id", length = 36)
     private String noteId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @Column
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @Column
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
-    @Column
+    @Column(length = 20, nullable = false)
     private String color;
+
+    @Column(name = "search_text", columnDefinition = "LONGTEXT")
+    private String searchText;
+
+    // Services use conditional updates against this value; every content/tag/delete write increments it.
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Column(name = "is_pinned")
     private Boolean pinned;
 
-    @Column(name = "is_delete")
+    @Column(name = "is_delete", nullable = false)
     private Boolean deleted;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "share_status")
+    @Column(name = "share_status", nullable = false, length = 16)
     private ShareStatus shareStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "note_type")
+    @Column(name = "note_type", nullable = false, length = 16)
     private NoteType noteType;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "note", fetch = FetchType.LAZY)

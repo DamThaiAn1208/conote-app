@@ -58,6 +58,9 @@
                         <FontIcon iconLiteral="codicon-pinned:16" styleClass="toolbar-icon" />
                       </graphic>
                     </ToggleButton>
+                    <ToggleButton fx:id="favoriteButton" text="★" mnemonicParsing="false"
+                                  onAction="#toggleFavorite" styleClass="note-top-icon-button"
+                                  accessibleText="Đánh dấu yêu thích" />
                     <Button fx:id="colorButton" mnemonicParsing="false" onAction="#toggleColorPicker" styleClass="note-top-icon-button">
                       <graphic>
                         <FontIcon iconLiteral="codicon-color-mode:16" styleClass="toolbar-icon" />

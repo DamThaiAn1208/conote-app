@@ -1,4 +1,7 @@
 target/
+build-verify/
+.stage4-db/
+conote-server/db.local.properties
 .m2-testfx/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

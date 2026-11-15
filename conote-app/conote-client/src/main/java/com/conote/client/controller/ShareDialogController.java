@@ -4,6 +4,7 @@ import com.conote.client.model.NoteModel;
 import com.conote.common.enums.SharePermission;
 import com.conote.client.model.ShareMember;
 import com.conote.client.service.CoNoteStore;
+import com.conote.client.service.ServerBackedCoNoteStore;
 import com.conote.client.util.IconFactory;
 import com.conote.client.util.MotionSupport;
 import javafx.event.ActionEvent;
@@ -30,6 +31,7 @@ public class ShareDialogController {
 
   @FXML
   private VBox memberList;
+  @FXML private Label statusLabel;
 
   private Runnable onClose;
   private CoNoteStore store;
@@ -47,6 +49,9 @@ public class ShareDialogController {
 
   public void setStore(CoNoteStore store) {
     this.store = store;
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      statusLabel.textProperty().bind(remote.serverStatusProperty());
+    }
   }
 
   public void setNote(NoteModel note) {
@@ -55,10 +60,18 @@ public class ShareDialogController {
         ? "Untitled note"
         : note.getTitle());
     renderMembers();
+    note.getShareMembers().addListener((javafx.collections.ListChangeListener<ShareMember>) change -> renderMembers());
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      remote.loadShares(note);
+    }
   }
 
   @FXML
   private void inviteMember() {
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      remote.inviteMember(note, emailField.getText(), permissionCombo.getValue(), emailField::clear);
+      return;
+    }
     store.addShareMember(note, emailField.getText(), permissionCombo.getValue());
     emailField.clear();
     renderMembers();
@@ -96,9 +109,6 @@ public class ShareDialogController {
       Region spacer = new Region();
       HBox.setHgrow(spacer, Priority.ALWAYS);
 
-      Label permission = new Label(member.getPermission().name());
-      permission.getStyleClass().add("share-permission");
-
       row.getChildren().addAll(avatar, info, spacer);
 
       boolean owner = !note.getShareMembers().isEmpty() && note.getShareMembers().get(0) == member;
@@ -108,7 +118,21 @@ public class ShareDialogController {
         row.getChildren().add(ownerBadge);
       }
 
-      row.getChildren().add(permission);
+      if (!owner && store instanceof ServerBackedCoNoteStore remote) {
+        ComboBox<SharePermission> access = new ComboBox<>();
+        access.getItems().setAll(SharePermission.values());
+        access.setValue(member.getPermission());
+        access.valueProperty().addListener((obs, oldValue, newValue) -> {
+          if (newValue != null && newValue != oldValue) {
+            remote.changeSharePermission(note, member, newValue);
+          }
+        });
+        row.getChildren().add(access);
+      } else {
+        Label permission = new Label(member.getPermission().name());
+        permission.getStyleClass().add("share-permission");
+        row.getChildren().add(permission);
+      }
 
       if (!owner) {
         javafx.scene.control.Button remove = new javafx.scene.control.Button("x");

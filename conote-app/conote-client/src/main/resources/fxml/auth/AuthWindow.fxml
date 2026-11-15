@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.conote.client.controller.AuthWindowController"
+           styleClass="auth-root" prefWidth="440" prefHeight="510">
+  <children>
+    <HBox fx:id="windowControls" alignment="CENTER_RIGHT" spacing="6" prefWidth="440"
+          StackPane.alignment="TOP_RIGHT" onMousePressed="#startWindowDrag"
+          onMouseDragged="#dragWindow" styleClass="auth-window-controls">
+      <children>
+        <Button text="−" onAction="#minimizeWindow" styleClass="auth-window-button"
+                accessibleText="Thu nhỏ cửa sổ" />
+        <Button text="×" onAction="#closeWindow" styleClass="auth-window-button"
+                accessibleText="Đóng ứng dụng" />
+      </children>
+    </HBox>
+    <VBox alignment="CENTER_LEFT" spacing="14" maxWidth="340" styleClass="auth-panel">
+      <children>
+        <Label text="CoNote" styleClass="auth-brand" />
+        <Label fx:id="headingLabel" text="Đăng nhập" styleClass="auth-heading" />
+        <Label fx:id="descriptionLabel" text="Mở ghi chú của tài khoản bạn." wrapText="true" styleClass="auth-description" />
+        <TextField fx:id="fullNameField" promptText="Họ và tên" visible="false" managed="false" />
+        <TextField fx:id="emailField" promptText="Email" />
+        <PasswordField fx:id="passwordField" promptText="Mật khẩu" />
+        <PasswordField fx:id="confirmPasswordField" promptText="Nhập lại mật khẩu" visible="false" managed="false" />
+        <Label fx:id="statusLabel" wrapText="true" visible="false" managed="false" styleClass="auth-status" />
+        <HBox alignment="CENTER_LEFT" spacing="10">
+          <children>
+            <Button fx:id="submitButton" text="Đăng nhập" defaultButton="true"
+                    onAction="#submit" styleClass="auth-submit" />
+            <ProgressIndicator fx:id="progressIndicator" prefWidth="22" prefHeight="22"
+                               visible="false" managed="false" />
+          </children>
+        </HBox>
+        <Button fx:id="switchModeButton" text="Chưa có tài khoản? Đăng ký"
+                onAction="#switchMode" styleClass="auth-switch" />
+      </children>
+    </VBox>
+  </children>
+</StackPane>

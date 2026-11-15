@@ -45,6 +45,7 @@
           </children>
         </HBox>
         <Label fx:id="noteTitleLabel" styleClass="dialog-subtitle" text="Note title" />
+        <Label fx:id="statusLabel" styleClass="auth-status-error" wrapText="true" />
         <HBox spacing="10.0">
           <children>
             <TextField fx:id="emailField" promptText="Email or username..." styleClass="popover-input" HBox.hgrow="ALWAYS" />
@@ -59,15 +60,7 @@
             <VBox fx:id="memberList" spacing="10.0" />
           </children>
         </VBox>
-        <Separator />
-        <HBox alignment="CENTER_LEFT" spacing="10.0">
-          <children>
-            <Label styleClass="dialog-subtitle" text="Share via link" />
-            <Button mnemonicParsing="false" onAction="#copyLink" styleClass="secondary-action-button" text="Copy link" />
-            <Region HBox.hgrow="ALWAYS" />
-            <Button mnemonicParsing="false" onAction="#closeDialog" styleClass="secondary-action-button" text="Cancel" />
-          </children>
-        </HBox>
+        <Button mnemonicParsing="false" onAction="#closeDialog" styleClass="secondary-action-button" text="Đóng" />
       </children>
     </VBox>
   </children>

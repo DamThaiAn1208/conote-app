@@ -5,6 +5,7 @@ import com.conote.client.model.AppTheme;
 import com.conote.common.enums.NoteType;
 import com.conote.client.model.NoteModel;
 import com.conote.client.service.CoNoteStore;
+import com.conote.client.service.ServerBackedCoNoteStore;
 import com.conote.client.util.MotionSupport;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -91,6 +92,13 @@ public class CreateNoteButtonController {
 
   @FXML
   private void createTextNote() {
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      remote.createNoteAsync(NoteType.TEXT, note -> {
+        setMenuVisible(false);
+        openCreatedNote(note);
+      });
+      return;
+    }
     NoteModel note = store.createNote(NoteType.TEXT);
     setMenuVisible(false);
     openCreatedNote(note);
@@ -98,6 +106,13 @@ public class CreateNoteButtonController {
 
   @FXML
   private void createChecklistNote() {
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      remote.createNoteAsync(NoteType.CHECKLIST, note -> {
+        setMenuVisible(false);
+        openCreatedNote(note);
+      });
+      return;
+    }
     NoteModel note = store.createNote(NoteType.CHECKLIST);
     setMenuVisible(false);
     openCreatedNote(note);

@@ -1,0 +1,5 @@
+# Copy to db.local.properties for the Stage 2 integration test only.
+# Use a dedicated empty database; never point this test at personal data.
+url=jdbc:mariadb://127.0.0.1:3306/conote_stage2_test
+user=conote_test
+password=
