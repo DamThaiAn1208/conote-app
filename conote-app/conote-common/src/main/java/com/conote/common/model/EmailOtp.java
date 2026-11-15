@@ -35,17 +35,17 @@ public class EmailOtp {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column
+    @Column(length = 254)
     private String email;
 
-    @Column(name = "otp_code")
+    @Column(name = "otp_code", length = 64)
     private String otpCode;
 
-    @Column(name = "is_used")
+    @Column(name = "is_used", nullable = false)
     private Boolean used;
 
     @Enumerated(EnumType.STRING)
-    @Column
+    @Column(length = 20)
     private OtpPurpose purpose;
 
     @Column(name = "expiry_time")

@@ -286,6 +286,33 @@ class NoteWindowSizingTest {
   }
 
   @Test
+  void viewSharedNoteDisplaysPermissionAndLocksEditor() throws Exception {
+    LoadedView<MainWindowController> mainView = loadMainWindow();
+    NoteModel note = runFx(() -> {
+      NoteModel created = mainView.controller().getStore().createNote(NoteType.TEXT);
+      created.setOwnerName("Alice");
+      created.setShared(true);
+      created.setSharePermission(SharePermission.VIEW);
+      return created;
+    });
+    runFx(() -> { mainView.controller().openNoteWindow(note); return null; });
+    WaitForAsyncUtils.waitForFxEvents();
+
+    NoteWindowController controller = openWindowController(mainView.controller(), note.getId());
+    TextField title = readField(controller, "titleField", TextField.class);
+    Button color = readField(controller, "colorButton", Button.class);
+    Button tag = readField(controller, "tagButton", Button.class);
+    StackPane menu = readField(controller, "noteMenuButton", StackPane.class);
+    Label permission = readField(controller, "sharedPermissionLabel", Label.class);
+    assertFalse(runFx(title::isEditable));
+    assertTrue(runFx(color::isDisabled));
+    assertTrue(runFx(tag::isDisabled));
+    assertFalse(runFx(menu::isVisible));
+    assertEquals("CHỈ XEM", runFx(permission::getText));
+    assertFalse(runFx(() -> editorArea(controller).isEditable()));
+  }
+
+  @Test
   void noteWindowTopBarMergesActionsAndMovesShareDeleteToOverflowMenu() throws Exception {
     LoadedView<MainWindowController> mainView = loadMainWindow();
     NoteModel note = runFx(() -> mainView.controller().getStore().createNote(NoteType.TEXT));
@@ -302,6 +329,7 @@ class NoteWindowSizingTest {
         openWindowController(mainView.controller(), note.getId());
     HBox titleBar = readField(noteWindowController, "windowTitleBar", HBox.class);
     ToggleButton pinButton = readField(noteWindowController, "pinButton", ToggleButton.class);
+    ToggleButton favoriteButton = readField(noteWindowController, "favoriteButton", ToggleButton.class);
     Button colorButton = readField(noteWindowController, "colorButton", Button.class);
     Button tagButton = readField(noteWindowController, "tagButton", Button.class);
     StackPane noteMenuButton = readField(noteWindowController, "noteMenuButton", StackPane.class);
@@ -312,6 +340,8 @@ class NoteWindowSizingTest {
     StackPane overlayLayer = readField(noteWindowController, "overlayLayer", StackPane.class);
 
     assertTrue(runFx(() -> isDescendant(titleBar, pinButton)));
+    assertTrue(runFx(() -> isDescendant(titleBar, favoriteButton)));
+    assertEquals("Đánh dấu yêu thích", runFx(favoriteButton::getAccessibleText));
     assertTrue(runFx(() -> isDescendant(titleBar, colorButton)));
     assertTrue(runFx(() -> isDescendant(titleBar, tagButton)));
     assertTrue(runFx(() -> isDescendant(titleBar, noteMenuButton)));
@@ -339,7 +369,7 @@ class NoteWindowSizingTest {
     assertTrue(runFx(shareDialog::isShowing));
     assertFalse(runFx(overlayLayer::isVisible));
 
-    Button shareCancelButton = dialogButton(shareDialog, "Cancel");
+    Button shareCancelButton = dialogButton(shareDialog, "Đóng");
     assertNotNull(shareCancelButton);
     fireButton(shareCancelButton);
     WaitForAsyncUtils.waitForFxEvents();
@@ -365,7 +395,7 @@ class NoteWindowSizingTest {
     assertTrue(runFx(() -> note.getShareMembers().stream()
         .anyMatch(member -> member.getEmail().equals("shared-test@example.com")
             && member.getPermission() == SharePermission.EDIT)));
-    fireButton(dialogButton(shareConfirmDialog, "Cancel"));
+    fireButton(dialogButton(shareConfirmDialog, "Đóng"));
     WaitForAsyncUtils.waitForFxEvents();
     assertFalse(runFx(shareConfirmDialog::isShowing));
 

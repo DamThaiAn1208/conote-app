@@ -6,6 +6,7 @@ import com.conote.common.model.Share;
 import com.conote.common.model.Tag;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.LocalDateTime;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,18 +19,24 @@ public class NoteCacheStore {
   };
 
   private final JsonStore jsonStore;
+  private final Path filePath;
 
   public NoteCacheStore() {
     this(new JsonStore());
   }
 
   public NoteCacheStore(JsonStore jsonStore) {
+    this(jsonStore, ClientStoragePaths.noteCacheFile());
+  }
+
+  public NoteCacheStore(JsonStore jsonStore, Path filePath) {
     ClientStoragePaths.init();
     this.jsonStore = jsonStore;
+    this.filePath = java.util.Objects.requireNonNull(filePath, "filePath");
   }
 
   public List<Note> findAll() {
-    List<Note> notes = jsonStore.read(ClientStoragePaths.noteCacheFile(), NOTE_LIST_TYPE, ArrayList::new);
+    List<Note> notes = jsonStore.read(filePath, NOTE_LIST_TYPE, ArrayList::new);
     List<Note> sanitized = new ArrayList<>();
     for (Note note : notes) {
       if (note != null) {
@@ -122,7 +129,7 @@ public class NoteCacheStore {
   }
 
   private void writeNotes(List<Note> notes) {
-    jsonStore.write(ClientStoragePaths.noteCacheFile(), notes == null ? List.of() : notes);
+    jsonStore.write(filePath, notes == null ? List.of() : notes);
   }
 
   private Note sanitizeLoadedNote(Note note) {

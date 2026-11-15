@@ -33,6 +33,10 @@ public class UserMenuDropdownController {
 
   @FXML
   private Button helpButton;
+  @FXML private Button logoutButton;
+  @FXML private javafx.scene.control.Label userNameLabel;
+  @FXML private javafx.scene.control.Label userEmailLabel;
+  @FXML private javafx.scene.control.Label avatarLabel;
 
   private Runnable onClose;
   private Runnable onHoverEnter;
@@ -50,6 +54,10 @@ public class UserMenuDropdownController {
   public void setContext(CoNoteStore store, MainWindowController mainController, Runnable onClose) {
     this.mainController = mainController;
     this.onClose = onClose;
+    String displayName = store.getCurrentUserDisplayName();
+    userNameLabel.setText(displayName);
+    userEmailLabel.setText(store.getCurrentUserEmail());
+    avatarLabel.setText(displayName.isBlank() ? "?" : displayName.substring(0, 1).toUpperCase(java.util.Locale.ROOT));
     dockToggle.selectedProperty().bindBidirectional(store.dockOnDesktopProperty());
     store.themeProperty().addListener((obs, oldValue, newValue) -> {
       if (darkThemeToggle.isSelected() != (newValue == AppTheme.DARK)) {
@@ -91,6 +99,13 @@ public class UserMenuDropdownController {
     }
     if (mainController != null) {
       Platform.runLater(mainController::showHelpDialog);
+    }
+  }
+
+  @FXML
+  private void logout() {
+    if (mainController != null) {
+      mainController.logout();
     }
   }
 

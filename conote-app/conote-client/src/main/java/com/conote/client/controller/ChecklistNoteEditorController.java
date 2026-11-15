@@ -36,6 +36,10 @@ public class ChecklistNoteEditorController {
     root.setManaged(visible);
   }
 
+  public void setReadOnly(boolean readOnly) {
+    root.setDisable(readOnly);
+  }
+
   @FXML
   private void addItem() {
     store.addChecklistItem(note);

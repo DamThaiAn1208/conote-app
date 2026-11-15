@@ -28,13 +28,13 @@
       <children>
         <StackPane prefHeight="42.0" prefWidth="42.0" styleClass="menu-avatar">
           <children>
-            <Label styleClass="menu-avatar-label" text="A" />
+            <Label fx:id="avatarLabel" styleClass="menu-avatar-label" text="?" />
           </children>
         </StackPane>
         <VBox spacing="2.0">
           <children>
-            <Label styleClass="menu-user-name" text="Alex Designer" />
-            <Label styleClass="menu-user-email" text="alex@noteflow.app" />
+            <Label fx:id="userNameLabel" styleClass="menu-user-name" text="CoNote" />
+            <Label fx:id="userEmailLabel" styleClass="menu-user-email" text="" />
           </children>
         </VBox>
       </children>
@@ -72,5 +72,7 @@
         <FontIcon iconLiteral="codicon-question:16" styleClass="menu-help-icon" />
       </graphic>
     </Button>
+    <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#logout"
+            styleClass="menu-help-button" text="Đăng xuất" />
   </children>
 </VBox>

@@ -2,6 +2,7 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
@@ -50,6 +51,12 @@
         <Region HBox.hgrow="ALWAYS" />
         <HBox alignment="CENTER_RIGHT" spacing="2.0" styleClass="title-controls-group">
           <children>
+            <Button fx:id="refreshButton" onAction="#refreshNotes" accessibleText="Tải bản máy chủ"
+                    mnemonicParsing="false" styleClass="title-icon-button window-control-button">
+              <graphic>
+                <FontIcon iconLiteral="codicon-refresh:16" styleClass="title-bar-icon" />
+              </graphic>
+            </Button>
             <StackPane fx:id="menuButton"
                        onMouseClicked="#showMenuFromAction"
                        onMouseExited="#handleMenuHoverExited"

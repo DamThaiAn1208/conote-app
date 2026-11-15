@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "tags")
+@Table(name = "tags", uniqueConstraints =
+        @UniqueConstraint(name = "uq_tags_user_name", columnNames = {"user_id", "tag_name"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,10 +37,10 @@ public class Tag {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "tag_name")
+    @Column(name = "tag_name", nullable = false, length = 50)
     private String tagName;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)

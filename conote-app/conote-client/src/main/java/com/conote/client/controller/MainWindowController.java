@@ -6,8 +6,10 @@ import com.conote.client.model.NoteColor;
 import com.conote.client.model.NoteModel;
 import com.conote.common.enums.NoteType;
 import com.conote.client.service.CoNoteStore;
+import com.conote.client.service.ServerBackedCoNoteStore;
 import com.conote.client.util.LoadedView;
 import com.conote.client.util.ViewLoader;
+import com.conote.common.dto.auth.AuthDtos;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +21,10 @@ import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.GaussianBlur;
@@ -35,6 +41,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+import javafx.event.EventHandler;
 
 public class MainWindowController {
   @FXML
@@ -76,11 +83,55 @@ public class MainWindowController {
   @FXML
   private StackPane overlayLayer;
 
-  private final CoNoteStore store = new CoNoteStore();
+  private CoNoteStore store;
+  private Runnable onLogout;
   private final Map<String, Stage> openWindows = new HashMap<>();
   private final Map<String, NoteWindowController> openWindowControllers = new HashMap<>();
   private final GaussianBlur overlayBlur = new GaussianBlur(14);
   private final Rectangle overlayClip = new Rectangle();
+  private final EventHandler<WindowEvent> hideHandler = event -> flushPendingChanges();
+  private final ChangeListener<Number> widthListener = (obs, oldValue, newValue) -> {
+    Stage stage = currentStage();
+    if (stage != null) store.updateWindowSize(newValue.doubleValue(), stage.getHeight());
+  };
+  private final ChangeListener<Number> heightListener = (obs, oldValue, newValue) -> {
+    Stage stage = currentStage();
+    if (stage != null) store.updateWindowSize(stage.getWidth(), newValue.doubleValue());
+  };
+  private Stage boundStage;
+  private final ChangeListener<Boolean> dockListener =
+      (obs, oldValue, newValue) -> {
+        if (boundStage != null) boundStage.setAlwaysOnTop(newValue);
+      };
+
+  public MainWindowController() {
+    this((CoNoteStore) null);
+  }
+
+  public MainWindowController(AuthDtos.UserView authenticatedUser) {
+    this(authenticatedUser == null ? null : new CoNoteStore(authenticatedUser));
+  }
+
+  public MainWindowController(CoNoteStore store) {
+    this.store = store == null ? new CoNoteStore() : store;
+  }
+
+  public void setOnLogout(Runnable onLogout) {
+    this.onLogout = onLogout;
+  }
+
+  public void logout() {
+    if (onLogout == null) {
+      return;
+    }
+    flushPendingChanges();
+    for (Stage noteStage : new ArrayList<>(openWindows.values())) {
+      noteStage.close();
+    }
+    closeOverlay();
+    titleBarController.hideMenu();
+    onLogout.run();
+  }
 
   @FXML
   private void initialize() {
@@ -91,9 +142,40 @@ public class MainWindowController {
     createNoteButtonController.setContext(store, this::openNoteWindow);
     noteListController.setContext(store, this);
     emptyStateController.setCreateAction(() -> {
+      if (store instanceof ServerBackedCoNoteStore remote) {
+        remote.createNoteAsync(NoteType.TEXT, this::openNoteWindow);
+        return;
+      }
       NoteModel note = store.createNote(NoteType.TEXT);
       openNoteWindow(note);
     });
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      Label serverStatus = new Label();
+      serverStatus.getStyleClass().add("auth-status-error");
+      serverStatus.setWrapText(true);
+      serverStatus.textProperty().bind(remote.serverStatusProperty());
+      Button reload = new Button("Tải bản máy chủ");
+      reload.setOnAction(event -> reloadFromServer());
+      Button overwrite = new Button("Ghi đè có chủ ý");
+      overwrite.setVisible(false);
+      overwrite.managedProperty().bind(overwrite.visibleProperty());
+      remote.serverStatusProperty().addListener((obs, oldValue, newValue) ->
+          overwrite.setVisible(remote.canOverwriteBlockedDraft()));
+      overwrite.setOnAction(event -> {
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION,
+            "Ghi bản nháp lên bản mới nhất trên máy chủ?", ButtonType.YES, ButtonType.NO);
+        if (currentStage() != null) confirmation.initOwner(currentStage());
+        if (confirmation.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+          remote.overwriteBlockedDraft();
+        }
+      });
+      HBox actions = new HBox(8, reload, overwrite);
+      VBox statusBar = new VBox(6, serverStatus, actions);
+      statusBar.getStyleClass().add("server-status-banner");
+      statusBar.visibleProperty().bind(serverStatus.textProperty().isNotEmpty());
+      statusBar.managedProperty().bind(statusBar.visibleProperty());
+      mainWindowShell.getChildren().add(1, statusBar);
+    }
 
     overlayLayer.setVisible(false);
     overlayLayer.setManaged(false);
@@ -137,12 +219,37 @@ public class MainWindowController {
     if (stage == null) {
       return;
     }
+    unbindPrimaryStage();
+    boundStage = stage;
+    stage.addEventHandler(WindowEvent.WINDOW_HIDING, hideHandler);
+    stage.widthProperty().addListener(widthListener);
+    stage.heightProperty().addListener(heightListener);
+    stage.setAlwaysOnTop(store.dockOnDesktopProperty().get());
+    store.dockOnDesktopProperty().addListener(dockListener);
+  }
 
-    stage.addEventHandler(WindowEvent.WINDOW_HIDING, event -> flushPendingChanges());
-    stage.widthProperty().addListener((obs, oldValue, newValue) ->
-        store.updateWindowSize(newValue.doubleValue(), stage.getHeight()));
-    stage.heightProperty().addListener((obs, oldValue, newValue) ->
-        store.updateWindowSize(stage.getWidth(), newValue.doubleValue()));
+  public void reloadFromServer() {
+    if (!(store instanceof ServerBackedCoNoteStore remote)) return;
+    if (!remote.hasUnconfirmedDrafts()) {
+      remote.refreshFromServer();
+      return;
+    }
+    Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION,
+        "Bản nháp chưa lưu sẽ bị bỏ. Tải bản mới từ máy chủ?", ButtonType.YES, ButtonType.NO);
+    if (currentStage() != null) confirmation.initOwner(currentStage());
+    if (confirmation.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+      remote.discardDraftsAndReload();
+    }
+  }
+
+  public void unbindPrimaryStage() {
+    if (boundStage == null) return;
+    boundStage.removeEventHandler(WindowEvent.WINDOW_HIDING, hideHandler);
+    boundStage.widthProperty().removeListener(widthListener);
+    boundStage.heightProperty().removeListener(heightListener);
+    store.dockOnDesktopProperty().removeListener(dockListener);
+    boundStage.setAlwaysOnTop(false);
+    boundStage = null;
   }
 
   public void openNoteWindow(NoteModel note) {
@@ -204,6 +311,13 @@ public class MainWindowController {
   }
 
   public void deleteNote(NoteModel note) {
+    if (store instanceof ServerBackedCoNoteStore remote) {
+      remote.deleteNoteWithAck(note, () -> {
+        closeNoteWindow(note);
+        closeOverlay();
+      });
+      return;
+    }
     closeNoteWindow(note);
     store.deleteNote(note);
     closeOverlay();

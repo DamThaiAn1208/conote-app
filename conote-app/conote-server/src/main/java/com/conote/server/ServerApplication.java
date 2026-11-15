@@ -1,15 +1,11 @@
 package com.conote.server;
 
-import com.conote.server.network.HttpServerBootstrap;
+import com.conote.server.network.SocketServerBootstrap;
 
 public class ServerApplication {
-    public static void main(String[] args) {
-        try {
-            HttpServerBootstrap server = new HttpServerBootstrap();
-            server.start();
-        } catch (Exception exception) {
-            System.err.println("Failed to start CoNote server");
-            exception.printStackTrace();
-        }
+    public static void main(String[] args) throws Exception {
+        SocketServerBootstrap server = new SocketServerBootstrap();
+        Runtime.getRuntime().addShutdownHook(new Thread(server::stop, "conote-shutdown"));
+        server.start();
     }
 }

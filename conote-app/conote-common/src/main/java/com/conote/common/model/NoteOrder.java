@@ -37,6 +37,12 @@ public class NoteOrder {
     @Column(name = "sort_order", nullable = false)
     private Long sortOrder;
 
-    @Column(name = "updated_at")
+    @Column(name = "is_pinned", nullable = false)
+    private Boolean pinned;
+
+    @Column(name = "is_favorite", nullable = false)
+    private Boolean favorite;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

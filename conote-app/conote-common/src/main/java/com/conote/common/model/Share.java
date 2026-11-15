@@ -12,13 +12,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Index;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "shares")
+@Table(name = "shares",
+        uniqueConstraints = @UniqueConstraint(name = "uq_shares_note_recipient", columnNames = {"note_id", "share_with"}),
+        indexes = @Index(name = "idx_shares_recipient", columnList = "share_with"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,8 +47,11 @@ public class Share {
     private User sharedWith;
 
     @Enumerated(EnumType.STRING)
-    @Column
+    @Column(nullable = false, length = 8)
     private SharePermission permission;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }
 
 

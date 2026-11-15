@@ -2,6 +2,7 @@ package com.conote.client.cache;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.LocalDateTime;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -14,19 +15,25 @@ public class NoteOrderCacheStore {
       };
 
   private final JsonStore jsonStore;
+  private final Path filePath;
 
   public NoteOrderCacheStore() {
     this(new JsonStore());
   }
 
   public NoteOrderCacheStore(JsonStore jsonStore) {
+    this(jsonStore, ClientStoragePaths.noteOrderCacheFile());
+  }
+
+  public NoteOrderCacheStore(JsonStore jsonStore, Path filePath) {
     ClientStoragePaths.init();
     this.jsonStore = jsonStore;
+    this.filePath = java.util.Objects.requireNonNull(filePath, "filePath");
   }
 
   public List<NoteOrderEntry> findAll() {
     List<NoteOrderEntry> entries =
-        jsonStore.read(ClientStoragePaths.noteOrderCacheFile(), NOTE_ORDER_LIST_TYPE, ArrayList::new);
+        jsonStore.read(filePath, NOTE_ORDER_LIST_TYPE, ArrayList::new);
     List<NoteOrderEntry> sanitized = new ArrayList<>();
     for (NoteOrderEntry entry : entries) {
       NoteOrderEntry clean = sanitize(entry);
@@ -75,7 +82,7 @@ public class NoteOrderCacheStore {
               now)));
     }
 
-    jsonStore.write(ClientStoragePaths.noteOrderCacheFile(), nextEntries);
+    jsonStore.write(filePath, nextEntries);
     return findByUser(normalizedUserKey);
   }
 
@@ -89,7 +96,7 @@ public class NoteOrderCacheStore {
     boolean removed = entries.removeIf(entry ->
         normalizedUserKey.equals(normalizeUserKey(entry.getUserKey())) && noteId.equals(entry.getNoteId()));
     if (removed) {
-      jsonStore.write(ClientStoragePaths.noteOrderCacheFile(), entries);
+      jsonStore.write(filePath, entries);
     }
   }
 

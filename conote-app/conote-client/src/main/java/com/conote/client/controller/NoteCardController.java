@@ -300,8 +300,9 @@ public class NoteCardController {
     note.contentProperty().addListener((obs, oldValue, newValue) -> handleContentChanged());
     note.typeProperty().addListener((obs, oldValue, newValue) -> refreshFromModel());
     note.colorProperty().addListener((obs, oldValue, newValue) -> refreshSurface());
-    note.mockSharedProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
-    note.mockSharedByProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.sharedProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSharedInfo());
+    note.sharePermissionProperty().addListener((obs, oldValue, newValue) -> refreshEditorVisibility());
     note.createdAtProperty().addListener((obs, oldValue, newValue) -> refreshDate());
     note.pinnedProperty().addListener((obs, oldValue, newValue) -> syncPinState());
     note.ownerNameProperty().addListener((obs, oldValue, newValue) -> refreshSourceBadge());
@@ -454,17 +455,21 @@ public class NoteCardController {
   }
 
   private void refreshSharedInfo() {
-    boolean visible = note != null && note.hasMockSharedInfo();
+    boolean visible = note != null && note.isShared();
     sharedInfoRow.setVisible(visible);
     sharedInfoRow.setManaged(visible);
     if (!visible) {
       return;
     }
 
-    sharedByLabel.setText(note.getMockSharedBy());
+    sharedByLabel.setText(note.getOwnerName());
   }
 
   private void refreshEditorVisibility() {
+    boolean readOnly = note.isReadOnlyShared();
+    titleField.setEditable(!readOnly);
+    checklistEditorBox.setDisable(readOnly);
+    richTextEditorBox.setDisable(readOnly);
     boolean isTextNote = note.getType() == NoteType.TEXT;
     boolean richText = isTextNote && note.hasRichTextFormatting();
     boolean showTextPreview = isTextNote && !expanded.get() && !richText;
@@ -1146,7 +1151,7 @@ public class NoteCardController {
 
   private void syncQuickTextMode() {
     boolean richText = note.getType() == NoteType.TEXT && note.hasRichTextFormatting();
-    quickTextArea.setEditable(!richText);
+    quickTextArea.setEditable(!richText && !note.isReadOnlyShared());
     quickTextArea.setFocusTraversable(!richText);
   }
 

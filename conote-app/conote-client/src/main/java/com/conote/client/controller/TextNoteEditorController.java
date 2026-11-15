@@ -145,6 +145,10 @@ public class TextNoteEditorController {
     root.setManaged(visible);
   }
 
+  public void setReadOnly(boolean readOnly) {
+    editorArea.setEditable(!readOnly);
+  }
+
   public void flushPendingContent() {
     flushEditorContent();
   }
